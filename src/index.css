@@ -1,0 +1,190 @@
+@font-face {
+  font-family: 'Minecraft-Regular';
+  src: url('./fonts/MinecraftRegular.otf');
+}
+
+@font-face {
+  font-family: 'Minecraft-Ten';
+  src: url('./fonts/MinecraftTen.ttf');
+}
+
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: 'Minecraft-Regular', sans-serif;
+  --heading: 'Minecraft-Regular', sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+body {
+  margin: 0;
+  background-color: #48494A;
+  color: #FFFFFF;
+  font-family: 'Minecraft-Regular', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Minecraft-Regular', sans-serif;
+  background-color: #48494A;
+  color: #FFFFFF;
+  letter-spacing: 0.1rem;
+}
+
+#root {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  text-align: center;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+h1,
+h2,
+p {
+  background-color: transparent;
+}
+
+/* For NAVBAR */
+.navbar{
+  background-color: #E6E8EB;
+  padding: 1rem 3rem;
+  border-style: solid;
+  border-color: #b1b2b5;
+  border-width: 0rem 0rem 0.45rem 0rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.branding{
+  background-color: #E6E8EB;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.brand_title{
+  background-color: #E6E8EB;
+  font-family: 'Minecraft-Ten';
+  font-size: 2rem;
+  color: #48494A;
+}
+
+.goobli_icon{
+  width: 4rem;
+  border-radius: 1rem;
+}
+
+.nav_links{
+  background-color: #E6E8EB;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.nav_links a{ 
+  color: #48494A;
+  background-color: #E6E8EB;      
+  text-decoration: none;  /*Pantanggal ng underline sa hyperlink*/
+  font-size: 1.2rem;
+}
+
+.nav_links a:hover{
+  color: #3C8527;
+  text-decoration: underline;
+  text-underline-offset: 0.35rem;
+}
