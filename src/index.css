@@ -188,3 +188,139 @@ p {
   text-decoration: underline;
   text-underline-offset: 0.35rem;
 }
+
+/* Featured section background */
+.featured_bg{
+  width: 100%;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background-image: url('./assets/featured_img.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Ensure key featured text elements are transparent, but allow buttons to keep their backgrounds */
+.featured_bg {
+  /* preserve image + overlay */
+}
+
+.featured_bg h1,
+.featured_bg h2,
+.featured_bg p,
+.featured_bg .gooblicraft,
+.featured_bg .featured_content,
+.featured_bg .scroll_mark {
+  background-color: transparent;
+}
+
+/* Subtle overlay for readability */
+.featured_bg::before{
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  pointer-events: none;
+}
+
+.featured_content{
+  position: relative;
+  z-index: 1;
+}
+
+/* Featured content styling to match reference */
+.featured_content{
+  max-width: 1100px;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.gooblicraft h1{
+  color: #ffffff;
+  font-family: 'Minecraft-Ten', 'Minecraft-Regular', sans-serif;
+  font-size: 84px;
+  line-height: 0.9;
+  margin-bottom: 0.5rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  text-shadow:
+    0 3px 0 rgba(0,0,0,0.6),
+    0 8px 24px rgba(0,0,0,0.55);
+}
+
+.gooblicraft p{
+  color: rgba(255,255,255,0.95);
+  font-size: 20px;
+  max-width: 760px;
+  margin: 0 auto;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.45);
+}
+
+.goobli_buttons{
+  background-color: transparent;
+  display: flex;
+  flex-direction: row;
+  gap: 0.8rem;
+  margin: 0.5rem;
+  padding: 0.5rem;
+}
+
+.goobli_buttons a{
+  text-decoration: none;
+  border-style: solid;
+  border-width: 0.25rem 0.25rem 0.25rem 0.25rem;
+  border-color: #1E1E1F;
+  font-family: 'Minecraft-Ten', var(--heading);
+  padding: 0.7rem 0.7rem ;
+  width: 19rem;
+  height: 5rem;
+  font-size: 1.8rem;
+  display: inline-block;
+  display: flex; 
+  justify-content: center;
+  align-items: center;
+
+  transition: all 0.3s ease;
+}
+
+.goobli_buttons a:hover{
+  text-decoration: underline;
+  transform: scale(1.05);
+
+  border-width: 0.4rem 0.4rem 0.4rem 0.4rem;
+  background-color: #5e2066;
+  box-shadow: inset 0 0 0 0.2rem #772981;
+  color: #FFFFFF;
+}
+.dl_btn{
+  background-color: #3C8527;
+  text-align: center;
+  box-shadow: inset 0 0 0 0.2rem #599747;
+}
+
+.wf_btn{
+  background-color: #D0D1D4;
+  text-align: center;
+  box-shadow: inset 0 0 0 0.2rem #ECEDEE;
+  color: #48494A;
+}
+
+.scroll_mark{
+  margin-top: 1.25rem;
+}
+
+.scroll_mark p{
+  color: rgba(255,255,255,0.9);
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+@media (max-width: 1024px) {
+  .gooblicraft h1{ font-size: 44px; letter-spacing: 2px }
+  .gooblicraft p{ font-size: 16px }
+  .dl_btn, .wf_btn{ font-size: 16px; padding: 0.75rem 1.25rem }
+}

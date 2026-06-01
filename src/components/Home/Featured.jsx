@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 
 const Featured = () => {
     return (
@@ -10,8 +11,8 @@ const Featured = () => {
                 </div>
         
             <div className="goobli_buttons">
-                {/* <a className="dl_btn" href="download_section/index.html">Download Packs</a>
-                <a className="wf_btn" href="workspace_section/index.html">Workspace</a> */}
+                <Link className="dl_btn" to="/downloadpacks">Download Packs</Link>
+                <Link className="wf_btn" to="/workspace">Workspace</Link>
             </div>
         
             <div className="scroll_mark"><p>Scroll Down ↓</p></div>

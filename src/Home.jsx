@@ -3,7 +3,7 @@ import Featured from './components/Home/Featured';
 
 function Home(){
   return (
-    <div>WELCOME TO HOMEPAGE
+    <div>
       <Featured></Featured>
     </div>
   )
