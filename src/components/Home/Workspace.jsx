@@ -1,8 +1,12 @@
 import React from 'react'
+import PackGenerator from './Workspace/PackGenerator'
 
 const Workspace = () => {
   return (
-    <div>Workspace</div>
+    <>
+      <PackGenerator></PackGenerator>
+    </>
+    
   )
 }
 
