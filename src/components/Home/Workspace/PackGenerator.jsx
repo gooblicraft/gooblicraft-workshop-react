@@ -61,6 +61,22 @@ const PackGenerator = () => {
       const writable = await manifestHandle.createWritable();
       await writable.write(`${JSON.stringify(manifest, null, 2)}\n`);
       await writable.close();
+      // write pack_icon.png into addon folder (use uploaded file if present, otherwise fetch preview URL)
+      try {
+        const iconHandle = await addonFolder.getFileHandle('pack_icon.png', { create: true });
+        const iconWritable = await iconHandle.createWritable();
+        if (packIconFile) {
+          await iconWritable.write(packIconFile);
+        } else if (packIconUrl) {
+          const res = await fetch(packIconUrl);
+          const blob = await res.blob();
+          await iconWritable.write(blob);
+        }
+        await iconWritable.close();
+      } catch (e) {
+        // ignore icon write errors but notify user
+        console.warn('Could not write pack_icon.png', e);
+      }
       alert(`Created folder structure inside ${addonName}`);
     } catch (error) {
       if (error && error.name !== 'AbortError') {
