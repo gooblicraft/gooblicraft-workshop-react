@@ -55,8 +55,25 @@ const PackGenerator = () => {
     try {
       const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
       const addonFolder = await rootHandle.getDirectoryHandle(addonName, { create: true });
-      await addonFolder.getDirectoryHandle('models', { create: true });
-      await addonFolder.getDirectoryHandle('textures', { create: true });
+      const modelsFolder = await addonFolder.getDirectoryHandle('models', { create: true });
+      const texturesFolder = await addonFolder.getDirectoryHandle('textures', { create: true });
+      await modelsFolder.getDirectoryHandle('blocks', { create: true });
+      await texturesFolder.getDirectoryHandle('blocks', { create: true });
+      const terrainTexture = {
+        resource_pack_name: manifest.header.name,
+        texture_name: 'atlas.terrain',
+        padding: 8,
+        num_mip_levels: 4,
+        texture_data: {
+          example_texture1: {
+            textures: [{ path: 'textures/blocks/example_texture1' }]
+          }
+        }
+      };
+      const terrainTextureHandle = await texturesFolder.getFileHandle('terrain_texture.json', { create: true });
+      const terrainTextureWritable = await terrainTextureHandle.createWritable();
+      await terrainTextureWritable.write(`${JSON.stringify(terrainTexture, null, 2)}\n`);
+      await terrainTextureWritable.close();
       const manifestHandle = await addonFolder.getFileHandle('manifest.json', { create: true });
       const writable = await manifestHandle.createWritable();
       await writable.write(`${JSON.stringify(manifest, null, 2)}\n`);
