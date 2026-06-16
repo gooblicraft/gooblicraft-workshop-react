@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { generateUUID } from '../../../utils/uuid';
 import usePackIcon from '../../../hooks/usePackIcon';
+import './PackGenerator.css';
 
 const createBehaviorPackUuids = () => ({
   header: generateUUID(),
@@ -176,118 +177,117 @@ const PackGenerator = () => {
   };
 
   return (
-    <div style={{ display: 'flex', gap: '40px', padding: '20px', fontFamily: 'sans-serif' }}>
-      
-      {/* LEFT SIDE: Your UI inputs */}
-      <div style={ showManifest ? { width: '400px', display: 'flex', flexDirection: 'column', gap: '15px' } : { flex: 1, display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 style={{ margin: 0 }}>Make Your Own Add-on</h2>
-          <button onClick={() => setShowManifest(s => !s)} style={{ padding: '6px 10px' }}>{showManifest ? 'Hide manifest' : 'Show manifest'}</button>
+    <div className="workspace-page">
+      <div className="workspace-shell">
+        <div className="workspace-hero">
+          <div>
+            <p className="workspace-eyebrow">Workspace</p>
+            <h2 className="workspace-title">Make Your Own Add-on</h2>
+            <p className="workspace-subtitle">Create a minimal resource pack and behavior pack setup with a clean Minecraft-style workflow.</p>
+          </div>
         </div>
-        
-        <label>
-          Addon Name:
-          <input 
-            type='text' 
-            placeholder='Input the Name of Your Addon' 
-            value={manifest.header.name}
-            onChange={(e) => handleUpdate('name', e.target.value)}
-            style={inputStyle}
-          />
-        </label>
 
-        <label>
-          Minimum Minecraft Version:
-          <select
-            // Join array with dots to match the select option value format
-            value={manifest.header.min_engine_version.join('.')}
-            onChange={(e) => handleUpdate('min_engine_version', e.target.value)}
-            style={inputStyle}
-          >
-            <option value="26.23">26.23</option>
-            <option value="26.20">26.20</option>
-            <option value="26.1">26.1</option>
-            <option value="26.0">26.0</option>
-            <option value="1.21.90">1.21.90</option>
-            <option value="1.21.80">1.21.80</option>
-            <option value="1.21.70">1.21.70</option>
-          </select>
-        </label>
+        <div className={showManifest ? 'workspace-grid workspace-grid--with-manifest' : 'workspace-grid'}>
+          <section className="workspace-panel">
+            <div className="workspace-field-stack">
+              <label className="workspace-label">
+                Addon Name:
+                <input 
+                  type='text' 
+                  placeholder='Input the Name of Your Addon' 
+                  value={manifest.header.name}
+                  onChange={(e) => handleUpdate('name', e.target.value)}
+                  className="workspace-input"
+                />
+              </label>
 
-        <label>
-          Creator Name:
-          <input 
-            type='text' 
-            placeholder='Creator Name' 
-            value={manifest.metadata.authors[0] || ''}
-            onChange={(e) => handleUpdate('author', e.target.value)}
-            style={inputStyle}
-          />
-        </label>
+              <label className="workspace-label">
+                Minimum Minecraft Version:
+                <select
+                  // Join array with dots to match the select option value format
+                  value={manifest.header.min_engine_version.join('.')}
+                  onChange={(e) => handleUpdate('min_engine_version', e.target.value)}
+                  className="workspace-input"
+                >
+                  <option value="26.23">26.23</option>
+                  <option value="26.20">26.20</option>
+                  <option value="26.1">26.1</option>
+                  <option value="26.0">26.0</option>
+                  <option value="1.21.90">1.21.90</option>
+                  <option value="1.21.80">1.21.80</option>
+                  <option value="1.21.70">1.21.70</option>
+                </select>
+              </label>
 
-        <label>
-          Addon Description:
-          <input 
-            type='text' 
-            placeholder='Addon Description' 
-            value={manifest.header.description}
-            onChange={(e) => handleUpdate('description', e.target.value)}
-            style={inputStyle}
-          />
-        </label>
+              <label className="workspace-label">
+                Creator Name:
+                <input 
+                  type='text' 
+                  placeholder='Creator Name' 
+                  value={manifest.metadata.authors[0] || ''}
+                  onChange={(e) => handleUpdate('author', e.target.value)}
+                  className="workspace-input"
+                />
+              </label>
 
-        <div
-          onDrop={onIconDrop}
-          onDragOver={onIconDragOver}
-          style={{ border: '2px dashed #666', padding: '12px', borderRadius: '6px', marginTop: '8px', textAlign: 'center' }}
-        >
-          <p style={{ margin: 0 }}>Drag & drop a PNG here to set your own icon</p>
-          <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#ccc' }}>or</p>
-          <input
-            type="file"
-            accept="image/png"
-            onChange={(e) => handlePackIconFile(e.target.files && e.target.files[0])}
-            style={{ marginTop: '8px' }}
-          />
-          {packIconUrl && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '8px', justifyContent: 'center' }}>
-              <img src={packIconUrl} alt="pack icon preview" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 8 }} />
+              <label className="workspace-label">
+                Addon Description:
+                <input 
+                  type='text' 
+                  placeholder='Addon Description' 
+                  value={manifest.header.description}
+                  onChange={(e) => handleUpdate('description', e.target.value)}
+                  className="workspace-input"
+                />
+              </label>
             </div>
+
+            <div
+              onDrop={onIconDrop}
+              onDragOver={onIconDragOver}
+              className="workspace-drop-zone"
+            >
+              <p className="workspace-drop-zone-title">Pack icon</p>
+              <p className="workspace-drop-zone-hint">Drop a PNG here or choose a file</p>
+              <input
+                type="file"
+                accept="image/png"
+                onChange={(e) => handlePackIconFile(e.target.files && e.target.files[0])}
+                className="workspace-file-input"
+              />
+              {packIconUrl && (
+                <div className="workspace-preview-row">
+                  <img src={packIconUrl} alt="pack icon preview" className="workspace-preview-image" />
+                  <span className="workspace-preview-text">Icon ready</span>
+                </div>
+              )}
+            </div>
+
+            <div className="workspace-actions-row">
+              <button onClick={() => setShowManifest(s => !s)} className="workspace-button workspace-button--secondary workspace-button--toggle">
+                {showManifest ? 'Hide manifest' : 'Show manifest'}
+              </button>
+              <button onClick={createAddonFolderStructure} className="workspace-button workspace-button--primary">Create folders</button>
+            </div>
+          </section>
+
+          {/* RIGHT SIDE: Live output stream */}
+          {showManifest && (
+            <section className="workspace-preview-panel">
+              <div className="workspace-preview-header">
+                <h2 className="workspace-preview-heading">Live manifest.json</h2>
+                <span className="workspace-preview-badge">JSON preview</span>
+              </div>
+              <pre className="workspace-manifest-pre">{JSON.stringify(manifest, null, 2)}</pre>
+              <div className="workspace-preview-actions">
+                <button onClick={regenerateUuids} className="workspace-button workspace-button--secondary">Regenerate UUIDs</button>
+              </div>
+            </section>
           )}
-
-        </div>
-
-        <div>
-          <button onClick={regenerateUuids} style={{ marginTop: '10px', padding: '8px 12px' }}>Regenerate UUIDs</button>
-        </div>
-
-        <div>
-          <button onClick={createAddonFolderStructure} style={{ marginTop: '10px', padding: '8px 12px' }}>Create resource and behavior folders</button>
         </div>
       </div>
-
-      
-
-      {/* RIGHT SIDE: Live output stream */}
-      {showManifest && (
-        <div style={{ flex: 1, textAlign: 'left', alignSelf: 'stretch' }}>
-          <h2>Live manifest.json</h2>
-          <pre style={{ background: '#1e1e1e', color: '#fff', padding: '15px', borderRadius: '5px', overflowX: 'auto', textAlign: 'left', whiteSpace: 'pre', margin: 0 }}>
-{JSON.stringify(manifest, null, 2)}
-          </pre>
-        </div>
-      )}
-
     </div>
   );
-};
-
-const inputStyle = {
-  display: 'block',
-  width: '100%',
-  padding: '8px',
-  marginTop: '5px',
-  boxSizing: 'border-box'
 };
 
 export default PackGenerator;

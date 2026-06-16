@@ -141,7 +141,7 @@ p {
 /* For NAVBAR */
 .navbar{
   background-color: #E6E8EB;
-  padding: 1rem 3rem;
+  padding: 0.5rem 0.75rem;
   border-style: solid;
   border-color: #b1b2b5;
   border-width: 0rem 0rem 0.45rem 0rem;
@@ -154,33 +154,34 @@ p {
   background-color: #E6E8EB;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .brand_title{
   background-color: #E6E8EB;
   font-family: 'Minecraft-Ten';
-  font-size: 2rem;
+  font-size: 1.2rem;
   color: #48494A;
 }
 
 .goobli_icon{
-  width: 4rem;
-  border-radius: 1rem;
+  width: 2rem;
+  border-radius: 0.5rem;
 }
 
 .nav_links{
   background-color: #E6E8EB;
   display: flex;
   justify-content: space-between;
-  gap: 2rem;
+  gap: 1.75rem;
+  margin-left: 1.5rem;
 }
 
 .nav_links a{ 
   color: #48494A;
   background-color: #E6E8EB;      
-  text-decoration: none;  /*Pantanggal ng underline sa hyperlink*/
-  font-size: 1.2rem;
+  text-decoration: none;  /*Pantanggal ng underline sa hyperlin k*/
+  font-size: 0.8rem;
 }
 
 .nav_links a:hover{
