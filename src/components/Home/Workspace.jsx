@@ -1,10 +1,10 @@
-import React from 'react'
-import PackGenerator from './Workspace/PackGenerator'
+import React from 'react';
+import WorkOptions from './Workspace/WorkOptions';
 
 const Workspace = () => {
   return (
     <>
-      <PackGenerator></PackGenerator>
+      <WorkOptions />
     </>
     
   )
