@@ -2,35 +2,68 @@ import React, { useState } from 'react';
 import { generateUUID } from '../../../utils/uuid';
 import usePackIcon from '../../../hooks/usePackIcon';
 
+const createBehaviorPackUuids = () => ({
+  header: generateUUID(),
+  module: generateUUID(),
+});
+
+const createResourceManifest = (behaviorPackHeaderUuid) => ({
+  format_version: 2,
+  metadata: {
+    authors: ["Gooblicraft"],
+  },
+  header: {
+    name: "My Own Addon Project",
+    description: "This is my own addon project",
+    min_engine_version: [26, 23],
+    uuid: generateUUID(),
+    version: [2, 0, 0]
+  },
+  modules: [
+    { type: "resources", uuid: generateUUID(), version: [1, 0, 0] }
+  ],
+  dependencies: [
+    { uuid: behaviorPackHeaderUuid, version: [2, 0, 0] }
+  ]
+});
+
+const createBehaviorManifest = (resourceManifest, behaviorPackUuids) => ({
+  format_version: 2,
+  metadata: {
+    authors: resourceManifest.metadata.authors,
+  },
+  header: {
+    name: resourceManifest.header.name,
+    description: resourceManifest.header.description,
+    min_engine_version: resourceManifest.header.min_engine_version,
+    uuid: behaviorPackUuids.header,
+    version: resourceManifest.header.version
+  },
+  modules: [
+    { type: "data", uuid: behaviorPackUuids.module, version: [1, 0, 0] }
+  ],
+  dependencies: [
+    { uuid: resourceManifest.header.uuid, version: resourceManifest.header.version }
+  ]
+});
+
 const PackGenerator = () => {
   // 1. Initialize state with your exact manifest structure
-  const [manifest, setManifest] = useState({
-    format_version: 2,
-    metadata: {
-      authors: ["Gooblicraft"],
-    },
-    header: {
-      name: "My Own Addon Project",
-      description: "This is my own addon project",
-      min_engine_version: [26, 23],
-      uuid: generateUUID(),
-      version: [2, 0, 0]
-    },
-    modules: [
-      { type: "resources", uuid: generateUUID(), version: [1, 0, 0] }
-    ],
-    dependencies: [
-      { uuid: generateUUID(), version: [2, 0, 0] }
-    ]
-  });
+  const [behaviorPackUuids, setBehaviorPackUuids] = useState(() => createBehaviorPackUuids());
+  const [manifest, setManifest] = useState(() => createResourceManifest(behaviorPackUuids.header));
 
   // Regenerate all uuids in the manifest (header, modules, dependencies)
   const regenerateUuids = () => {
+    const nextBehaviorPackUuids = createBehaviorPackUuids();
+    setBehaviorPackUuids(nextBehaviorPackUuids);
     setManifest(prev => {
       const updated = { ...prev };
       updated.header = { ...updated.header, uuid: generateUUID() };
       updated.modules = updated.modules.map(m => ({ ...m, uuid: generateUUID() }));
-      updated.dependencies = updated.dependencies.map(d => ({ ...d, uuid: generateUUID() }));
+      updated.dependencies = updated.dependencies.map(d => ({
+        ...d,
+        uuid: nextBehaviorPackUuids.header,
+      }));
       return updated;
     });
   };
@@ -55,10 +88,16 @@ const PackGenerator = () => {
     try {
       const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
       const addonFolder = await rootHandle.getDirectoryHandle(addonName, { create: true });
-      const modelsFolder = await addonFolder.getDirectoryHandle('models', { create: true });
-      const texturesFolder = await addonFolder.getDirectoryHandle('textures', { create: true });
-      await modelsFolder.getDirectoryHandle('blocks', { create: true });
-      await texturesFolder.getDirectoryHandle('blocks', { create: true });
+      const resourcePackFolder = await addonFolder.getDirectoryHandle('resource_pack', { create: true });
+      const behaviorPackFolder = await addonFolder.getDirectoryHandle('behavior_pack', { create: true });
+
+      const resourceModelsFolder = await resourcePackFolder.getDirectoryHandle('models', { create: true });
+      const resourceTexturesFolder = await resourcePackFolder.getDirectoryHandle('textures', { create: true });
+      await resourceModelsFolder.getDirectoryHandle('blocks', { create: true });
+      await resourceTexturesFolder.getDirectoryHandle('blocks', { create: true });
+
+      await behaviorPackFolder.getDirectoryHandle('blocks', { create: true });
+
       const terrainTexture = {
         resource_pack_name: manifest.header.name,
         texture_name: 'atlas.terrain',
@@ -70,31 +109,34 @@ const PackGenerator = () => {
           }
         }
       };
-      const terrainTextureHandle = await texturesFolder.getFileHandle('terrain_texture.json', { create: true });
-      const terrainTextureWritable = await terrainTextureHandle.createWritable();
-      await terrainTextureWritable.write(`${JSON.stringify(terrainTexture, null, 2)}\n`);
-      await terrainTextureWritable.close();
-      const manifestHandle = await addonFolder.getFileHandle('manifest.json', { create: true });
-      const writable = await manifestHandle.createWritable();
-      await writable.write(`${JSON.stringify(manifest, null, 2)}\n`);
-      await writable.close();
-      // write pack_icon.png into addon folder (use uploaded file if present, otherwise fetch preview URL)
-      try {
-        const iconHandle = await addonFolder.getFileHandle('pack_icon.png', { create: true });
+
+      const behaviorManifest = createBehaviorManifest(manifest, behaviorPackUuids);
+
+      const writeJsonFile = async (folderHandle, fileName, data) => {
+        const fileHandle = await folderHandle.getFileHandle(fileName, { create: true });
+        const fileWritable = await fileHandle.createWritable();
+        await fileWritable.write(`${JSON.stringify(data, null, 2)}\n`);
+        await fileWritable.close();
+      };
+
+      await writeJsonFile(resourcePackFolder, 'terrain_texture.json', terrainTexture);
+      await writeJsonFile(resourcePackFolder, 'manifest.json', manifest);
+      await writeJsonFile(behaviorPackFolder, 'manifest.json', behaviorManifest);
+
+      const iconSource = packIconFile || (packIconUrl ? await (await fetch(packIconUrl)).blob() : null);
+
+      const writePackIcon = async (folderHandle) => {
+        if (!iconSource) return;
+        const iconHandle = await folderHandle.getFileHandle('pack_icon.png', { create: true });
         const iconWritable = await iconHandle.createWritable();
-        if (packIconFile) {
-          await iconWritable.write(packIconFile);
-        } else if (packIconUrl) {
-          const res = await fetch(packIconUrl);
-          const blob = await res.blob();
-          await iconWritable.write(blob);
-        }
+        await iconWritable.write(iconSource);
         await iconWritable.close();
-      } catch (e) {
-        // ignore icon write errors but notify user
-        console.warn('Could not write pack_icon.png', e);
-      }
-      alert(`Created folder structure inside ${addonName}`);
+      };
+
+      await writePackIcon(resourcePackFolder);
+      await writePackIcon(behaviorPackFolder);
+
+      alert(`Created resource and behavior pack folders inside ${addonName}`);
     } catch (error) {
       if (error && error.name !== 'AbortError') {
         alert('Failed to create the folder structure.');
@@ -220,7 +262,7 @@ const PackGenerator = () => {
         </div>
 
         <div>
-          <button onClick={createAddonFolderStructure} style={{ marginTop: '10px', padding: '8px 12px' }}>Create addon folders</button>
+          <button onClick={createAddonFolderStructure} style={{ marginTop: '10px', padding: '8px 12px' }}>Create resource and behavior folders</button>
         </div>
       </div>
 
