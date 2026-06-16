@@ -118,6 +118,7 @@
 }
 
 .work-options-title {
+    font-family: 'Minecraft-Ten', sans-serif;
   margin: 0;
   color: rgba(255, 250, 255, 0.95);
   font-size: clamp(2.4rem, 5vw, 4.8rem);
@@ -224,9 +225,10 @@
 }
 
 .work-option-card__title {
+    font-family: 'Minecraft-Ten', sans-serif;
   margin: 0;
   color: rgba(255, 255, 255, 0.9);
-  font-size: 1.1rem;
+  font-size: 1.8rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
