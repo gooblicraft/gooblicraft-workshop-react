@@ -120,7 +120,8 @@ const PackGenerator = () => {
         await fileWritable.close();
       };
 
-      await writeJsonFile(resourcePackFolder, 'terrain_texture.json', terrainTexture);
+      // CHANGED: Passed resourceTexturesFolder instead of resourcePackFolder
+      await writeJsonFile(resourceTexturesFolder, 'terrain_texture.json', terrainTexture);
       await writeJsonFile(resourcePackFolder, 'manifest.json', manifest);
       await writeJsonFile(behaviorPackFolder, 'manifest.json', behaviorManifest);
 
