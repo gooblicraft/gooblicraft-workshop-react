@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 const BlockCreator = () => {
-  // Initialize state for all the user inputs specified in the brackets
+  // Initialize state for all the user inputs
   const [blockData, setBlockData] = useState({
     blockId: 'my_addon',
     blockName: 'custom_block',
@@ -10,7 +10,10 @@ const BlockCreator = () => {
     blockDisplayName: 'Custom Block',
     blockGeometry: 'custom_block_geo',
     blockTexture: 'custom_block_texture',
-    blockRender: 'opaque'
+    blockRender: 'opaque',
+    // Defaulting to a standard 16x16x16 box, but users can paste complex arrays here
+    collisionBox: '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}',
+    selectionBox: '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}'
   });
 
   // Generic update handler for inputs
@@ -21,7 +24,16 @@ const BlockCreator = () => {
     }));
   };
 
-  // Generate the live JSON based on the user's input state
+  // Helper function to parse the pasted Blockbench JSON safely
+  const parseBoxData = (str) => {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      return "Invalid JSON";
+    }
+  };
+
+  // Generate the live JSON object
   const generateBlockJson = () => {
     return {
       "format_version": "1.21.20",
@@ -85,14 +97,8 @@ const BlockCreator = () => {
               "render_method": blockData.blockRender
             }
           },
-          "minecraft:collision_box": {
-            "origin": [-8, 0, -8],
-            "size": [16, 16, 16]
-          },
-          "minecraft:selection_box": {
-            "origin": [-8, 0, -8],
-            "size": [16, 16, 16]
-          },
+          "minecraft:collision_box": parseBoxData(blockData.collisionBox),
+          "minecraft:selection_box": parseBoxData(blockData.selectionBox),
           "minecraft:light_dampening": 0,
           "minecraft:light_emission": 0
         }
@@ -100,12 +106,40 @@ const BlockCreator = () => {
     };
   };
 
+  // NEW: Custom stringifier that collapses ONLY the collision and selection boxes into single lines
+  const getFormattedJsonString = () => {
+    const jsonObj = generateBlockJson();
+
+    // 1. Temporarily extract the collision and selection boxes
+    const collisionObj = jsonObj["minecraft:block"].components["minecraft:collision_box"];
+    const selectionObj = jsonObj["minecraft:block"].components["minecraft:selection_box"];
+
+    // 2. Put a placeholder string in their place
+    jsonObj["minecraft:block"].components["minecraft:collision_box"] = "@@COLLISION_BOX@@";
+    jsonObj["minecraft:block"].components["minecraft:selection_box"] = "@@SELECTION_BOX@@";
+
+    // 3. Stringify the rest of the object normally with nice spacing (null, 2)
+    let rawStr = JSON.stringify(jsonObj, null, 2);
+
+    // 4. Stringify the extracted boxes without ANY spacing (producing a single-line string)
+    const singleLineCollision = JSON.stringify(collisionObj);
+    const singleLineSelection = JSON.stringify(selectionObj);
+
+    // 5. Replace the placeholders with our single-line versions
+    rawStr = rawStr.replace('"@@COLLISION_BOX@@"', singleLineCollision);
+    rawStr = rawStr.replace('"@@SELECTION_BOX@@"', singleLineSelection);
+
+    // (Optional) Collapse rotation arrays so they look neat too: [0, 180, 0]
+    rawStr = rawStr.replace(/\[\s*([\d\.-]+),\s*([\d\.-]+),\s*([\d\.-]+)\s*\]/g, "[$1, $2, $3]");
+
+    return rawStr;
+  };
+
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(JSON.stringify(generateBlockJson(), null, 2));
+    navigator.clipboard.writeText(getFormattedJsonString());
     alert("Block JSON copied to clipboard!");
   };
 
-  // NEW: Function to save directly to the behavior_pack/blocks folder
   const saveBlockFile = async () => {
     if (!window.showDirectoryPicker) {
       alert('Your browser does not support folder selection.');
@@ -113,21 +147,17 @@ const BlockCreator = () => {
     }
 
     try {
-      // Prompt user to select their root add-on folder
       alert("Please select the root folder of your Add-on (the one that contains behavior_pack and resource_pack).");
       const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
       
-      // Navigate to behavior_pack -> blocks
       const bpHandle = await rootHandle.getDirectoryHandle('behavior_pack');
       const blocksHandle = await bpHandle.getDirectoryHandle('blocks', { create: true });
       
-      // Create the file using the blockName variable
       const fileName = `${blockData.blockName}.json`;
       const fileHandle = await blocksHandle.getFileHandle(fileName, { create: true });
       
-      // Write the generated JSON to the file
       const writable = await fileHandle.createWritable();
-      await writable.write(`${JSON.stringify(generateBlockJson(), null, 2)}\n`);
+      await writable.write(`${getFormattedJsonString()}\n`);
       await writable.close();
       
       alert(`Successfully saved to behavior_pack/blocks/${fileName}`);
@@ -245,6 +275,34 @@ const BlockCreator = () => {
                 </select>
               </label>
             </div>
+
+            <hr style={{ border: '1px solid #333', margin: '24px 0' }} />
+
+            <div className="workspace-field-stack">
+              <label className="workspace-label">
+                Collision Box (Paste Blockbench Array or Object):
+                <textarea 
+                  value={blockData.collisionBox}
+                  onChange={(e) => handleUpdate('collisionBox', e.target.value)}
+                  className="workspace-input"
+                  rows={6}
+                  style={{ resize: 'vertical', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
+                  placeholder="Paste JSON here..."
+                />
+              </label>
+
+              <label className="workspace-label">
+                Selection Box (Paste Blockbench Array or Object):
+                <textarea 
+                  value={blockData.selectionBox}
+                  onChange={(e) => handleUpdate('selectionBox', e.target.value)}
+                  className="workspace-input"
+                  rows={6}
+                  style={{ resize: 'vertical', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
+                  placeholder="Paste JSON here..."
+                />
+              </label>
+            </div>
             
             <div className="workspace-actions-row" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
               <button onClick={copyToClipboard} className="workspace-button workspace-button--secondary">
@@ -263,7 +321,7 @@ const BlockCreator = () => {
               <span className="workspace-preview-badge">JSON preview</span>
             </div>
             <pre className="workspace-manifest-pre">
-              {JSON.stringify(generateBlockJson(), null, 2)}
+              {getFormattedJsonString()}
             </pre>
           </section>
         </div>
