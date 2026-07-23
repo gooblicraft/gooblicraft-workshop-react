@@ -105,6 +105,40 @@ const BlockCreator = () => {
     alert("Block JSON copied to clipboard!");
   };
 
+  // NEW: Function to save directly to the behavior_pack/blocks folder
+  const saveBlockFile = async () => {
+    if (!window.showDirectoryPicker) {
+      alert('Your browser does not support folder selection.');
+      return;
+    }
+
+    try {
+      // Prompt user to select their root add-on folder
+      alert("Please select the root folder of your Add-on (the one that contains behavior_pack and resource_pack).");
+      const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      
+      // Navigate to behavior_pack -> blocks
+      const bpHandle = await rootHandle.getDirectoryHandle('behavior_pack');
+      const blocksHandle = await bpHandle.getDirectoryHandle('blocks', { create: true });
+      
+      // Create the file using the blockName variable
+      const fileName = `${blockData.blockName}.json`;
+      const fileHandle = await blocksHandle.getFileHandle(fileName, { create: true });
+      
+      // Write the generated JSON to the file
+      const writable = await fileHandle.createWritable();
+      await writable.write(`${JSON.stringify(generateBlockJson(), null, 2)}\n`);
+      await writable.close();
+      
+      alert(`Successfully saved to behavior_pack/blocks/${fileName}`);
+    } catch (error) {
+      if (error && error.name !== 'AbortError') {
+        console.error(error);
+        alert('Failed to save the file. Make sure you selected the correct Add-on root folder that contains the "behavior_pack" folder.');
+      }
+    }
+  };
+
   return (
     <div className="workspace-page">
       <div className="workspace-shell">
@@ -212,9 +246,12 @@ const BlockCreator = () => {
               </label>
             </div>
             
-            <div className="workspace-actions-row" style={{ marginTop: '20px' }}>
-              <button onClick={copyToClipboard} className="workspace-button workspace-button--primary">
+            <div className="workspace-actions-row" style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+              <button onClick={copyToClipboard} className="workspace-button workspace-button--secondary">
                 Copy JSON
+              </button>
+              <button onClick={saveBlockFile} className="workspace-button workspace-button--primary">
+                Save to Behavior Pack
               </button>
             </div>
           </section>
