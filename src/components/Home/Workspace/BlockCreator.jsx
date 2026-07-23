@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const BlockCreator = () => {
+const BlockCreator = ({ availableTextures = [] }) => {
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -16,6 +16,7 @@ const BlockCreator = () => {
   });
 
   const [showPreview, setShowPreview] = useState(false);
+  const [isTextureModalOpen, setIsTextureModalOpen] = useState(false); // Para sa modal/popup state
 
   const handleUpdate = (field, value) => {
     setBlockData((prev) => ({
@@ -159,7 +160,6 @@ const BlockCreator = () => {
     }
   };
 
-  // Reusable inline style for the centered top-labels
   const labelStyle = { 
     display: 'flex', 
     flexDirection: 'column', 
@@ -170,6 +170,9 @@ const BlockCreator = () => {
     fontSize: '0.8rem',
     marginBottom: '8px'
   };
+
+  // Hanapin ang napiling texture object para maipakita ang preview image sa form
+  const selectedTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === blockData.blockTexture);
 
   return (
     <div className="workspace-page">
@@ -184,11 +187,10 @@ const BlockCreator = () => {
           </div>
         </div>
 
-        {/* MAIN CONTAINER: Flexbox for Side-by-Side layout */}
+        {/* MAIN CONTAINER */}
         <div style={{ display: 'flex', gap: '30px', maxWidth: '1400px', margin: '0 auto', width: '100%', alignItems: 'flex-start' }}>
           
-          {/* LEFT COLUMN: Input Form and Action Buttons */}
-          {/* Binaba natin ang flex nito sa '1' para mas malaki ang preview */}
+          {/* LEFT COLUMN: Input Form */}
           <div style={{ flex: '1', transition: 'flex 0.3s ease', minWidth: '450px' }}>
             <section className="workspace-panel" style={{ padding: '30px' }}>
               
@@ -237,9 +239,35 @@ const BlockCreator = () => {
                   <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockGeometry} onChange={(e) => handleUpdate('blockGeometry', e.target.value)} placeholder="custom_block_geo" />
                 </label>
 
+                {/* CARD-STYLE TEXTURE SELECTOR BUTTON / PREVIEW */}
+                {/* CARD-STYLE TEXTURE SELECTOR BUTTON / PREVIEW */}
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Block Texture:</span>
-                  <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockTexture} onChange={(e) => handleUpdate('blockTexture', e.target.value)} placeholder="custom_texture" />
+                  <div 
+                    onClick={() => setIsTextureModalOpen(true)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                      border: '1px solid #444c56',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      width: '100%',
+                      minHeight: '42px'
+                    }}
+                  >
+                    {selectedTexObj ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <img src={selectedTexObj.url} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                        <span style={{ fontSize: '0.8rem', color: '#7ee787' }}>{selectedTexObj.name}</span>
+                      </div>
+                    ) : (
+                      <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>Select texture...</span>
+                    )}
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '2px 8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}>Browse</span>
+                  </div>
                 </label>
               </div>
 
@@ -254,13 +282,12 @@ const BlockCreator = () => {
                     <option value="alpha_test_single_sided">Alpha Single Sided</option>
                   </select>
                 </label>
-                {/* Empty divs to maintain grid column structure if needed */}
                 <div style={{ width: '100%' }}></div>
                 <div style={{ width: '100%' }}></div>
                 <div style={{ width: '100%' }}></div>
               </div>
 
-              {/* HITBOXES (Dashed Inner Container) */}
+              {/* HITBOXES */}
               <div style={{ border: '1px dashed #444c56', borderRadius: '16px', padding: '30px', textAlign: 'center', marginTop: '10px' }}>
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>Custom Hitboxes</h3>
                 <p style={{ opacity: 0.7, fontSize: '0.85rem', marginBottom: '24px' }}>Drop or paste your Blockbench JSON array here.</p>
@@ -307,8 +334,7 @@ const BlockCreator = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Optional Live Preview */}
-          {/* Tumaas ang flex sa '1.8' para mas malawak siya kaysa sa form */}
+          {/* RIGHT COLUMN: Live Preview */}
           {showPreview && (
             <section className="workspace-preview-panel" style={{ flex: '1.8', minWidth: '400px', position: 'sticky', top: '20px', maxHeight: '90vh', overflowY: 'auto' }}>
               <div className="workspace-preview-header">
@@ -323,6 +349,106 @@ const BlockCreator = () => {
 
         </div>
       </div>
+
+      {/* TEXTURE PICKER MODAL / POP-UP */}
+      {isTextureModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#161b22',
+            border: '1px solid #444c56',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '700px',
+            maxHeight: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+            overflow: 'hidden'
+          }}>
+            {/* Modal Header */}
+            <div style={{ padding: '20px', borderBottom: '1px solid #444c56', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', textTransform: 'uppercase' }}>Select Block Texture</h3>
+              <button 
+                onClick={() => setIsTextureModalOpen(false)}
+                style={{ backgroundColor: 'transparent', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body (Card Grid) */}
+            <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+              {availableTextures.length === 0 ? (
+                <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0' }}>
+                  No textures found. Please add some .png files in the Texture Storage first!
+                </p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '15px' }}>
+                  {availableTextures.map((tex, index) => {
+                    const cleanName = tex.name.replace(/\.[^/.]+$/, "");
+                    const isSelected = blockData.blockTexture === cleanName;
+
+                    return (
+                      <div 
+                        key={index}
+                        onClick={() => {
+                          handleUpdate('blockTexture', cleanName);
+                          setIsTextureModalOpen(false);
+                        }}
+                        style={{
+                          border: isSelected ? '2px solid #7ee787' : '1px solid #444c56',
+                          borderRadius: '12px',
+                          padding: '12px',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          backgroundColor: isSelected ? 'rgba(126, 231, 135, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <img 
+                          src={tex.url} 
+                          alt={tex.name} 
+                          style={{ width: '48px', height: '48px', objectFit: 'contain', marginBottom: '8px', imageRendering: 'pixelated' }} 
+                        />
+                        <span style={{ fontSize: '0.7rem', opacity: 0.8, wordBreak: 'break-all', color: '#c9d1d9' }}>
+                          {tex.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{ padding: '15px 20px', borderTop: '1px solid #444c56', textAlign: 'right' }}>
+              <button 
+                className="workspace-button workspace-button--secondary"
+                onClick={() => setIsTextureModalOpen(false)}
+                style={{ padding: '6px 16px', fontSize: '0.85rem' }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
