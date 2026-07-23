@@ -3,6 +3,8 @@ import React, { useState, useCallback, useRef } from 'react';
 const StoreBlockTexture = ({ dirHandle, setDirHandle, textures, setTextures }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
   const fileInputRef = useRef(null);
 
   // Helper para i-generate at i-save ang terrain_texture.json sa textures/ folder
@@ -50,8 +52,12 @@ const StoreBlockTexture = ({ dirHandle, setDirHandle, textures, setTextures }) =
       const blocksHandle = await texturesHandle.getDirectoryHandle('blocks', { create: true });
       
       setDirHandle(texturesHandle);
+      setIsLoading(true);
+      setLoadingMessage('Loading existing textures...');
       await loadTextures(blocksHandle, texturesHandle);
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
       if (error && error.name !== 'AbortError') {
         console.error(error);
         alert('Failed to open the folder.');
@@ -86,29 +92,44 @@ const StoreBlockTexture = ({ dirHandle, setDirHandle, textures, setTextures }) =
     if (!confirmDelete) return;
 
     try {
+      setIsLoading(true);
+      setLoadingMessage(`Deleting ${fileName}...`);
       const blocksHandle = await dirHandle.getDirectoryHandle('blocks');
       await blocksHandle.removeEntry(fileName);
       await loadTextures(blocksHandle, dirHandle);
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
       console.error("Error deleting file:", error);
       alert(`Failed to delete ${fileName}.`);
     }
   };
 
-  // 4. Save files helper para sa Drop at Browse
+  // 4. Save files helper gamit ang Promise.all at loading status
   const saveFilesToBlocksFolder = async (fileList) => {
     if (!dirHandle) return;
 
     try {
+      setIsLoading(true);
+      setLoadingMessage(`Saving ${fileList.length} textures... Please wait.`);
+
       const blocksHandle = await dirHandle.getDirectoryHandle('blocks', { create: true });
-      for (const file of fileList) {
-        const fileHandle = await blocksHandle.getFileHandle(file.name, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(file);
-        await writable.close();
-      }
+      
+      // Sabay-sabay na isulat ang mga files
+      await Promise.all(
+        fileList.map(async (file) => {
+          const fileHandle = await blocksHandle.getFileHandle(file.name, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(file);
+          await writable.close();
+        })
+      );
+
+      setLoadingMessage('Updating texture library & terrain mapping...');
       await loadTextures(blocksHandle, dirHandle);
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
       console.error("Error saving files:", error);
       alert("Failed to save some textures.");
     }
@@ -158,7 +179,44 @@ const StoreBlockTexture = ({ dirHandle, setDirHandle, textures, setTextures }) =
   );
 
   return (
-    <div className="workspace-page">
+    <div className="workspace-page" style={{ position: 'relative' }}>
+      
+      {/* LOADING OVERLAY */}
+      {isLoading && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(5px)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          color: '#ffffff'
+        }}>
+          <div style={{
+            width: '48px',
+            height: '48px',
+            border: '5px solid rgba(255, 255, 255, 0.1)',
+            borderTop: '5px solid #7ee787',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            marginBottom: '20px'
+          }} />
+          <p style={{ fontSize: '1.1rem', fontWeight: 'bold', letterSpacing: '1px' }}>{loadingMessage}</p>
+          <style>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
+        </div>
+      )}
+
       <div className="workspace-shell">
         
         {/* HERO SECTION */}
