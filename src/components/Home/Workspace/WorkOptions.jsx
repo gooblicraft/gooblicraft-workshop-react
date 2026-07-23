@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import PackGenerator from './PackGenerator';
 import BlockCreator from './BlockCreator';
-import EntityCreator from './EntityCreator';
+import StoreBlockTexture from './StoreBlockTexture';
 import './WorkOptions.css';
 
 const WorkOptions = () => {
@@ -26,12 +26,12 @@ const WorkOptions = () => {
         imageStyle: 'work-option-card__image--block',
       },
       {
-        id: 'entity',
-        title: 'Entity Creator',
-        description: 'Draft an entity concept and keep the workflow ready for a future dedicated editor.',
-        buttonLabel: 'Open entity creator',
-        imageLabel: 'Entity creator preview',
-        imageStyle: 'work-option-card__image--entity',
+        id: 'texture',
+        title: 'Texture Storage',
+        description: 'Draft an texture concept and keep the workflow ready for a future dedicated editor.',
+        buttonLabel: 'Open texture creator',
+        imageLabel: 'texture creator preview',
+        imageStyle: 'work-option-card__image--texture',
       },
     ],
     []
@@ -41,8 +41,8 @@ const WorkOptions = () => {
     switch (selectedTool) {
       case 'block':
         return <BlockCreator />;
-      case 'entity':
-        return <EntityCreator />;
+      case 'texture':
+        return <StoreBlockTexture />;
       case 'pack':
         return <PackGenerator />;
       default:
@@ -79,7 +79,7 @@ const WorkOptions = () => {
         <h1 className="work-options-title">Let&apos;s get started</h1>
         <p className="work-options-subtitle">
           Choose the tool you want to open. The first card launches the pack generator,
-          the second opens the block creator, and the third opens the entity creator.
+          the second opens the block creator, and the third opens the texture creator.
         </p>
       </section>
 
