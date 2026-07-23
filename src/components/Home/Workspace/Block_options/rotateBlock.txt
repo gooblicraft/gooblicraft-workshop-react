@@ -1,0 +1,146 @@
+{
+    "format_version": "1.21.70",
+    "minecraft:block": {
+        "description": {
+            "identifier": "[blockId]:[blockName]",
+            "menu_category": {
+                "category": "items"
+            },
+            "traits": {
+                "minecraft:placement_direction": {
+                    "enabled_states": [
+                        "minecraft:cardinal_direction"
+                    ]
+                }
+            },
+            "states": {
+                "goobli:variant": [0,1,2]
+            }
+        },
+        "permutations": [
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            180,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            0,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            90,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            -90,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+				"condition": "q.block_state('goobli:variant') == 0",
+                "components": {
+                    "minecraft:geometry": {
+                        "identifier": "geometry.[blockGeometry]",
+                        "bone_visibility": {
+                            "main": true,
+                            "left": false,
+                            "right": false
+                        }
+                    }
+                }
+            },
+            {
+				"condition": "q.block_state('goobli:variant') == 1",
+                "components": {
+                    "minecraft:geometry": {
+                        "identifier": "geometry.[blockGeometry]",
+                        "bone_visibility": {
+                            "main": false,
+                            "left": true,
+                            "right": false
+                        }
+                    }
+                }
+            },
+            {
+				"condition": "q.block_state('goobli:variant') == 2",
+                "components": {
+                    "minecraft:geometry": {
+                        "identifier": "geometry.[blockGeometry]",
+                        "bone_visibility": {
+                            "main": false,
+                            "left": false,
+                            "right": true
+                        }
+                    }
+                }
+            }
+        ],
+        "components": {
+            "tag:block_name": {},
+            "minecraft:display_name": "[blockDisplayName]",
+            "minecraft:geometry": {
+                "identifier": "geometry.[blockGeometry]",
+                "bone_visibility": {
+                    "main": true,
+                    "left": false,
+                    "right": false
+                }
+            },
+            "minecraft:material_instances": {
+                "*": {
+                    "texture": "[blockTexture]",
+                    "render_method": "[blockRender]"
+                }
+            },
+            "minecraft:collision_box": false,
+            "minecraft:selection_box": {
+                "origin": [
+                    -6,
+                    0,
+                    -6
+                ],
+                "size": [
+                    12,
+                    11,
+                    12
+                ]
+            },
+            "minecraft:light_dampening": 0,
+            "minecraft:light_emission": 0,
+            "minecraft:custom_components": [
+				"goobli:rotate"
+            ]
+        }
+    }
+}
