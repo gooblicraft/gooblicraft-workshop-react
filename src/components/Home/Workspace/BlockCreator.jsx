@@ -1,5 +1,141 @@
 import React, { useState } from 'react';
 
+// Texture Picker Modal Component (Wala nang Header, nasa baba na ang Close)
+const TexturePickerModal = ({ availableTextures, blockData, handleUpdate, setIsTextureModalOpen }) => {
+  const [modalSearchQuery, setModalSearchQuery] = useState('');
+
+  const filteredModalTextures = availableTextures.filter(tex => 
+    tex.name.toLowerCase().includes(modalSearchQuery.toLowerCase())
+  );
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      backdropFilter: 'blur(5px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '20px'
+    }}>
+      <div style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #d0d7de',
+        borderRadius: '16px',
+        width: '100%',
+        maxWidth: '700px',
+        maxHeight: '80vh',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+        overflow: 'hidden',
+        color: '#24292f'
+      }}>
+        {/* Search Bar Section sa pinakataas */}
+        <div style={{ padding: '20px 20px 15px 20px', borderBottom: '1px solid #d0d7de', backgroundColor: '#f6f8fa' }}>
+          <div style={{ position: 'relative', width: '100%' }}>
+            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '0.9rem' }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="SEARCH TEXTURES..." 
+              value={modalSearchQuery}
+              onChange={(e) => setModalSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 10px 8px 35px',
+                backgroundColor: '#ffffff',
+                border: '1px solid #d0d7de',
+                borderRadius: '6px',
+                color: '#24292f',
+                outline: 'none',
+                fontSize: '0.85rem',
+                textTransform: 'uppercase',
+                fontWeight: 'bold'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Modal Body (Card Grid) */}
+        <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
+          {availableTextures.length === 0 ? (
+            <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0' }}>
+              No textures found. Please add some .png files in the Texture Storage first!
+            </p>
+          ) : filteredModalTextures.length === 0 ? (
+            <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0', color: '#cf222e' }}>
+              No textures match "{modalSearchQuery}".
+            </p>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '15px' }}>
+              {filteredModalTextures.map((tex, index) => {
+                const cleanName = tex.name.replace(/\.[^/.]+$/, "");
+                const isSelected = blockData.blockTexture === cleanName;
+
+                return (
+                  <div 
+                    key={index}
+                    onClick={() => {
+                      handleUpdate('blockTexture', cleanName);
+                      setIsTextureModalOpen(false);
+                    }}
+                    style={{
+                      border: isSelected ? '2px solid #238636' : '1px solid #d0d7de',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      backgroundColor: isSelected ? 'rgba(35, 134, 54, 0.08)' : '#f6f8fa',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <img 
+                      src={tex.url} 
+                      alt={tex.name} 
+                      style={{ width: '48px', height: '48px', objectFit: 'contain', marginBottom: '8px', imageRendering: 'pixelated' }} 
+                    />
+                    <span style={{ fontSize: '0.7rem', fontWeight: '500', wordBreak: 'break-all', color: '#24292f' }}>
+                      {tex.name}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Modal Footer na may Close Button */}
+        <div style={{ padding: '15px 20px', borderTop: '1px solid #d0d7de', textAlign: 'right', backgroundColor: '#f6f8fa' }}>
+          <button 
+            onClick={() => setIsTextureModalOpen(false)}
+            style={{ 
+              padding: '8px 20px', 
+              fontSize: '0.85rem', 
+              backgroundColor: '#ffffff', 
+              border: '1px solid #d0d7de', 
+              borderRadius: '6px', 
+              cursor: 'pointer',
+              color: '#24292f',
+              fontWeight: 'bold'
+            }}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const BlockCreator = ({ availableTextures = [] }) => {
   const [blockData, setBlockData] = useState({
     blockId: '',
@@ -16,7 +152,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
   });
 
   const [showPreview, setShowPreview] = useState(false);
-  const [isTextureModalOpen, setIsTextureModalOpen] = useState(false); // Para sa modal/popup state
+  const [isTextureModalOpen, setIsTextureModalOpen] = useState(false);
 
   const handleUpdate = (field, value) => {
     setBlockData((prev) => ({
@@ -171,7 +307,6 @@ const BlockCreator = ({ availableTextures = [] }) => {
     marginBottom: '8px'
   };
 
-  // Hanapin ang napiling texture object para maipakita ang preview image sa form
   const selectedTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === blockData.blockTexture);
 
   return (
@@ -239,7 +374,6 @@ const BlockCreator = ({ availableTextures = [] }) => {
                   <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockGeometry} onChange={(e) => handleUpdate('blockGeometry', e.target.value)} placeholder="custom_block_geo" />
                 </label>
 
-                {/* CARD-STYLE TEXTURE SELECTOR BUTTON / PREVIEW */}
                 {/* CARD-STYLE TEXTURE SELECTOR BUTTON / PREVIEW */}
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Block Texture:</span>
@@ -350,104 +484,14 @@ const BlockCreator = ({ availableTextures = [] }) => {
         </div>
       </div>
 
-      {/* TEXTURE PICKER MODAL / POP-UP */}
+      {/* TEXTURE PICKER MODAL CONTAINER */}
       {isTextureModalOpen && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
-          backdropFilter: 'blur(5px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000,
-          padding: '20px'
-        }}>
-          <div style={{
-            backgroundColor: '#161b22',
-            border: '1px solid #444c56',
-            borderRadius: '16px',
-            width: '100%',
-            maxWidth: '700px',
-            maxHeight: '80vh',
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-            overflow: 'hidden'
-          }}>
-            {/* Modal Header */}
-            <div style={{ padding: '20px', borderBottom: '1px solid #444c56', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', textTransform: 'uppercase' }}>Select Block Texture</h3>
-              <button 
-                onClick={() => setIsTextureModalOpen(false)}
-                style={{ backgroundColor: 'transparent', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Body (Card Grid) */}
-            <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
-              {availableTextures.length === 0 ? (
-                <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0' }}>
-                  No textures found. Please add some .png files in the Texture Storage first!
-                </p>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '15px' }}>
-                  {availableTextures.map((tex, index) => {
-                    const cleanName = tex.name.replace(/\.[^/.]+$/, "");
-                    const isSelected = blockData.blockTexture === cleanName;
-
-                    return (
-                      <div 
-                        key={index}
-                        onClick={() => {
-                          handleUpdate('blockTexture', cleanName);
-                          setIsTextureModalOpen(false);
-                        }}
-                        style={{
-                          border: isSelected ? '2px solid #7ee787' : '1px solid #444c56',
-                          borderRadius: '12px',
-                          padding: '12px',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          backgroundColor: isSelected ? 'rgba(126, 231, 135, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <img 
-                          src={tex.url} 
-                          alt={tex.name} 
-                          style={{ width: '48px', height: '48px', objectFit: 'contain', marginBottom: '8px', imageRendering: 'pixelated' }} 
-                        />
-                        <span style={{ fontSize: '0.7rem', opacity: 0.8, wordBreak: 'break-all', color: '#c9d1d9' }}>
-                          {tex.name}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Modal Footer */}
-            <div style={{ padding: '15px 20px', borderTop: '1px solid #444c56', textAlign: 'right' }}>
-              <button 
-                className="workspace-button workspace-button--secondary"
-                onClick={() => setIsTextureModalOpen(false)}
-                style={{ padding: '6px 16px', fontSize: '0.85rem' }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+        <TexturePickerModal 
+          availableTextures={availableTextures} 
+          blockData={blockData} 
+          handleUpdate={handleUpdate} 
+          setIsTextureModalOpen={setIsTextureModalOpen} 
+        />
       )}
     </div>
   );
