@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 
 const BlockCreator = () => {
-  // Initialize state for all the user inputs
+  // Initialize state with empty strings so inputs are clear by default
   const [blockData, setBlockData] = useState({
-    blockId: 'my_addon',
-    blockName: 'custom_block',
-    blockGroup: 'construction',
-    blockTag: 'custom_block_tag',
-    blockDisplayName: 'Custom Block',
-    blockGeometry: 'custom_block_geo',
-    blockTexture: 'custom_block_texture',
-    blockRender: 'opaque',
-    // Defaulting to a standard 16x16x16 box, but users can paste complex arrays here
-    collisionBox: '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}',
-    selectionBox: '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}'
+    blockId: '',
+    blockName: '',
+    blockGroupMenu: 'construction', // Select menus need an initial actual value
+    blockGroup: '',
+    blockTag: '',
+    blockDisplayName: '',
+    blockGeometry: '',
+    blockTexture: '',
+    blockRender: 'opaque', // Select menus need an initial actual value
+    collisionBox: '',
+    selectionBox: ''
   });
 
   // Generic update handler for inputs
@@ -25,24 +25,36 @@ const BlockCreator = () => {
   };
 
   // Helper function to parse the pasted Blockbench JSON safely
-  const parseBoxData = (str) => {
+  const parseBoxData = (str, defaultBox) => {
+    const dataToParse = str.trim() ? str : defaultBox;
     try {
-      return JSON.parse(str);
+      return JSON.parse(dataToParse);
     } catch (e) {
       return "Invalid JSON";
     }
   };
 
-  // Generate the live JSON object
+  // Generate the live JSON object using fallbacks (||) if the user leaves it empty
   const generateBlockJson = () => {
+    const id = blockData.blockId || 'my_addon';
+    const name = blockData.blockName || 'custom_block';
+    const displayName = blockData.blockDisplayName || 'Custom Block';
+    const group = blockData.blockGroup || 'custom_block_group';
+    const tag = blockData.blockTag || 'custom_block_tag';
+    const geo = blockData.blockGeometry || 'custom_block_geo';
+    const tex = blockData.blockTexture || 'custom_block_texture';
+    
+    // Default boxes if textarea is empty
+    const defaultBox = '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}';
+
     return {
       "format_version": "1.21.20",
       "minecraft:block": {
         "description": {
-          "identifier": `${blockData.blockId}:${blockData.blockName}`,
+          "identifier": `${id}:${name}`,
           "menu_category": {
-            "category": "construction",
-            "group": `itemGroup.name.${blockData.blockGroup}`
+            "category": blockData.blockGroupMenu,
+            "group": `itemGroup.name.${group}`
           },
           "traits": {
             "minecraft:placement_direction": {
@@ -87,18 +99,17 @@ const BlockCreator = () => {
           }
         ],
         "components": {
-          // Using bracket notation to create a dynamic object key
-          [`tag:${blockData.blockTag}`]: {},
-          "minecraft:display_name": blockData.blockDisplayName,
-          "minecraft:geometry": `geometry.${blockData.blockGeometry}`,
+          [`tag:${tag}`]: {},
+          "minecraft:display_name": displayName,
+          "minecraft:geometry": `geometry.${geo}`,
           "minecraft:material_instances": {
             "*": {
-              "texture": blockData.blockTexture,
+              "texture": tex,
               "render_method": blockData.blockRender
             }
           },
-          "minecraft:collision_box": parseBoxData(blockData.collisionBox),
-          "minecraft:selection_box": parseBoxData(blockData.selectionBox),
+          "minecraft:collision_box": parseBoxData(blockData.collisionBox, defaultBox),
+          "minecraft:selection_box": parseBoxData(blockData.selectionBox, defaultBox),
           "minecraft:light_dampening": 0,
           "minecraft:light_emission": 0
         }
@@ -106,30 +117,24 @@ const BlockCreator = () => {
     };
   };
 
-  // NEW: Custom stringifier that collapses ONLY the collision and selection boxes into single lines
+  // Custom stringifier that collapses ONLY the collision and selection boxes into single lines
   const getFormattedJsonString = () => {
     const jsonObj = generateBlockJson();
 
-    // 1. Temporarily extract the collision and selection boxes
     const collisionObj = jsonObj["minecraft:block"].components["minecraft:collision_box"];
     const selectionObj = jsonObj["minecraft:block"].components["minecraft:selection_box"];
 
-    // 2. Put a placeholder string in their place
     jsonObj["minecraft:block"].components["minecraft:collision_box"] = "@@COLLISION_BOX@@";
     jsonObj["minecraft:block"].components["minecraft:selection_box"] = "@@SELECTION_BOX@@";
 
-    // 3. Stringify the rest of the object normally with nice spacing (null, 2)
     let rawStr = JSON.stringify(jsonObj, null, 2);
 
-    // 4. Stringify the extracted boxes without ANY spacing (producing a single-line string)
     const singleLineCollision = JSON.stringify(collisionObj);
     const singleLineSelection = JSON.stringify(selectionObj);
 
-    // 5. Replace the placeholders with our single-line versions
     rawStr = rawStr.replace('"@@COLLISION_BOX@@"', singleLineCollision);
     rawStr = rawStr.replace('"@@SELECTION_BOX@@"', singleLineSelection);
 
-    // (Optional) Collapse rotation arrays so they look neat too: [0, 180, 0]
     rawStr = rawStr.replace(/\[\s*([\d\.-]+),\s*([\d\.-]+),\s*([\d\.-]+)\s*\]/g, "[$1, $2, $3]");
 
     return rawStr;
@@ -153,7 +158,8 @@ const BlockCreator = () => {
       const bpHandle = await rootHandle.getDirectoryHandle('behavior_pack');
       const blocksHandle = await bpHandle.getDirectoryHandle('blocks', { create: true });
       
-      const fileName = `${blockData.blockName}.json`;
+      // Use fallback name if input is empty
+      const fileName = `${blockData.blockName || 'custom_block'}.json`;
       const fileHandle = await blocksHandle.getFileHandle(fileName, { create: true });
       
       const writable = await fileHandle.createWritable();
@@ -191,7 +197,7 @@ const BlockCreator = () => {
                   value={blockData.blockId}
                   onChange={(e) => handleUpdate('blockId', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., my_addon"
+                  placeholder="my_addon"
                 />
               </label>
 
@@ -202,7 +208,7 @@ const BlockCreator = () => {
                   value={blockData.blockName}
                   onChange={(e) => handleUpdate('blockName', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., custom_block"
+                  placeholder="custom_block"
                 />
               </label>
 
@@ -213,18 +219,31 @@ const BlockCreator = () => {
                   value={blockData.blockDisplayName}
                   onChange={(e) => handleUpdate('blockDisplayName', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., Custom Block"
+                  placeholder="Custom Block"
                 />
               </label>
 
               <label className="workspace-label">
-                Creative Menu Group:
-                <input 
-                  type='text' 
+                Category Menu:
+                <select
+                  value={blockData.blockGroupMenu}
+                  onChange={(e) => handleUpdate('blockGroupMenu', e.target.value)}
+                  className="workspace-input"
+                >
+                  <option value="construction">Construction</option>
+                  <option value="equipment">Equipment</option>
+                  <option value="items">Items</option>
+                  <option value="nature">Nature</option>
+                </select>
+              </label>
+
+              <label className="workspace-label">
+                Category Group:
+                <input type='text' 
                   value={blockData.blockGroup}
                   onChange={(e) => handleUpdate('blockGroup', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., construction"
+                  placeholder="custom_block_group" 
                 />
               </label>
 
@@ -235,7 +254,7 @@ const BlockCreator = () => {
                   value={blockData.blockTag}
                   onChange={(e) => handleUpdate('blockTag', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., wood, stone, custom"
+                  placeholder="custom_block_tag"
                 />
               </label>
 
@@ -246,7 +265,7 @@ const BlockCreator = () => {
                   value={blockData.blockGeometry}
                   onChange={(e) => handleUpdate('blockGeometry', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., custom_block_geo"
+                  placeholder="custom_block_geo"
                 />
               </label>
 
@@ -257,7 +276,7 @@ const BlockCreator = () => {
                   value={blockData.blockTexture}
                   onChange={(e) => handleUpdate('blockTexture', e.target.value)}
                   className="workspace-input"
-                  placeholder="e.g., custom_texture"
+                  placeholder="custom_texture"
                 />
               </label>
 
@@ -285,9 +304,9 @@ const BlockCreator = () => {
                   value={blockData.collisionBox}
                   onChange={(e) => handleUpdate('collisionBox', e.target.value)}
                   className="workspace-input"
-                  rows={6}
+                  rows={4}
                   style={{ resize: 'vertical', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
-                  placeholder="Paste JSON here..."
+                  placeholder='[{"origin": [-8, 0, -8], "size": [16, 16, 16]}]'
                 />
               </label>
 
@@ -297,9 +316,9 @@ const BlockCreator = () => {
                   value={blockData.selectionBox}
                   onChange={(e) => handleUpdate('selectionBox', e.target.value)}
                   className="workspace-input"
-                  rows={6}
+                  rows={4}
                   style={{ resize: 'vertical', fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}
-                  placeholder="Paste JSON here..."
+                  placeholder='[{"origin": [-8, 0, -8], "size": [16, 16, 16]}]'
                 />
               </label>
             </div>
