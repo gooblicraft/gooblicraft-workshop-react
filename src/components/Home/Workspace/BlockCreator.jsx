@@ -142,7 +142,6 @@ const BlockCreator = ({ availableTextures = [] }) => {
     blockName: '',
     blockGroupMenu: 'construction',
     blockGroup: '',
-    blockTag: '',
     blockDisplayName: '',
     blockGeometry: '',
     blockTexture: '',
@@ -175,7 +174,6 @@ const BlockCreator = ({ availableTextures = [] }) => {
     const name = blockData.blockName || 'custom_block';
     const displayName = blockData.blockDisplayName || 'Custom Block';
     const group = blockData.blockGroup || 'custom_block_group';
-    const tag = blockData.blockTag || 'custom_block_tag';
     const geo = blockData.blockGeometry || 'custom_block_geo';
     const tex = blockData.blockTexture || 'custom_block_texture';
     
@@ -225,7 +223,6 @@ const BlockCreator = ({ availableTextures = [] }) => {
           }
         ],
         "components": {
-          [`tag:${tag}`]: {},
           "minecraft:display_name": displayName,
           "minecraft:geometry": `geometry.${geo}`,
           "minecraft:material_instances": {
@@ -344,11 +341,6 @@ const BlockCreator = ({ availableTextures = [] }) => {
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Display Name:</span>
                   <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockDisplayName} onChange={(e) => handleUpdate('blockDisplayName', e.target.value)} placeholder="Custom Block" />
-                </label>
-
-                <label className="workspace-label" style={labelStyle}>
-                  <span style={{ marginBottom: '8px' }}>Block Tag:</span>
-                  <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockTag} onChange={(e) => handleUpdate('blockTag', e.target.value)} placeholder="custom_block_tag" />
                 </label>
               </div>
 
