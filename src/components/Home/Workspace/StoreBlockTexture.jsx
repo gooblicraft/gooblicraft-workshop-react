@@ -1,8 +1,7 @@
 import React, { useState, useCallback } from 'react';
 
-const StoreBlockTexture = () => {
-  const [dirHandle, setDirHandle] = useState(null);
-  const [textures, setTextures] = useState([]);
+// Tinatanggap na natin ang props mula sa taas para hindi ma-reset ang data
+const StoreBlockTexture = ({ dirHandle, setDirHandle, textures, setTextures }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -97,7 +96,7 @@ const StoreBlockTexture = () => {
       console.error("Error saving dropped files:", error);
       alert("Failed to save some textures.");
     }
-  }, [dirHandle]);
+  }, [dirHandle, dirHandle, setTextures]);
 
   // 5. Logic para i-filter ang mga textures base sa search query
   const filteredTextures = textures.filter(tex => 
@@ -169,7 +168,7 @@ const StoreBlockTexture = () => {
                     Texture Library ({filteredTextures.length})
                   </h3>
                   
-                  {/* SEARCH BAR - Crystal / Glassmorphism Effect */}
+                  {/* SEARCH BAR - Crystal Effect */}
                   <div style={{ position: 'relative', width: '300px' }}>
                     <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', opacity: 0.8 }}>🔍</span>
                     <input 
@@ -180,17 +179,17 @@ const StoreBlockTexture = () => {
                       style={{
                         width: '100%',
                         padding: '10px 10px 10px 35px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)', // Semi-transparent
-                        backdropFilter: 'blur(10px)', // Crystal blur effect
-                        WebkitBackdropFilter: 'blur(10px)', // Para sa Safari
-                        border: '1px solid rgba(255, 255, 255, 0.15)', // Light border highlight
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        backdropFilter: 'blur(10px)',
+                        WebkitBackdropFilter: 'blur(10px)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
                         borderRadius: '8px',
-                        color: '#ffffff', // Balik puti ang text
+                        color: '#ffffff',
                         outline: 'none',
                         fontSize: '0.9rem',
                         textTransform: 'uppercase',
                         fontWeight: 'bold',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)' // Dagdag slight shadow for depth
+                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
                       }}
                     />
                   </div>
@@ -216,7 +215,7 @@ const StoreBlockTexture = () => {
                           alignItems: 'center' 
                         }}
                       >
-                        {/* DELETE BUTTON (Ekis) */}
+                        {/* DELETE BUTTON */}
                         <button
                           onClick={() => deleteTexture(tex.name)}
                           title="Delete texture"

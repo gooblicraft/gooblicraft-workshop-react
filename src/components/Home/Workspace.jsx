@@ -1,13 +1,17 @@
 import React from 'react';
 import WorkOptions from './Workspace/WorkOptions';
 
-const Workspace = () => {
+const Workspace = ({ dirHandle, setDirHandle, textures, setTextures }) => {
   return (
     <>
-      <WorkOptions />
+      <WorkOptions 
+        dirHandle={dirHandle} 
+        setDirHandle={setDirHandle} 
+        textures={textures} 
+        setTextures={setTextures} 
+      />
     </>
-    
   )
 }
 
-export default Workspace
+export default Workspace;

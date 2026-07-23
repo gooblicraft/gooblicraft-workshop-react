@@ -4,7 +4,7 @@ import BlockCreator from './BlockCreator';
 import StoreBlockTexture from './StoreBlockTexture';
 import './WorkOptions.css';
 
-const WorkOptions = () => {
+const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
   const [selectedTool, setSelectedTool] = useState(null);
 
   const options = useMemo(
@@ -40,9 +40,17 @@ const WorkOptions = () => {
   const renderSelectedTool = () => {
     switch (selectedTool) {
       case 'block':
-        return <BlockCreator />;
+        // Ipapasok din natin ang textures dito mamaya para mapagpilian sa Block Creator!
+        return <BlockCreator availableTextures={textures} />;
       case 'texture':
-        return <StoreBlockTexture />;
+        return (
+          <StoreBlockTexture 
+            dirHandle={dirHandle} 
+            setDirHandle={setDirHandle} 
+            textures={textures} 
+            setTextures={setTextures} 
+          />
+        );
       case 'pack':
         return <PackGenerator />;
       default:
@@ -56,21 +64,21 @@ const WorkOptions = () => {
         );
     }
   };
-      if (selectedTool) {
-        return (
-          <div className="work-options-tool-screen">
-            <button
-              type="button"
-              className="work-options-back-button"
-              onClick={() => setSelectedTool(null)}
-            >
-              Back to options
-            </button>
-            {renderSelectedTool()}
-          </div>
-        );
-      }
 
+  if (selectedTool) {
+    return (
+      <div className="work-options-tool-screen">
+        <button
+          type="button"
+          className="work-options-back-button"
+          onClick={() => setSelectedTool(null)}
+        >
+          Back to options
+        </button>
+        {renderSelectedTool()}
+      </div>
+    );
+  }
 
   return (
     <div className="work-options-page">
