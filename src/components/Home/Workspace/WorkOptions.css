@@ -139,7 +139,7 @@
   max-width: 1220px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
 }
 
@@ -217,6 +217,10 @@
 
 .work-option-card__image--entity {
   background: linear-gradient(180deg, rgba(42, 20, 61, 0.15) 0%, rgba(9, 5, 13, 0.3) 100%);
+}
+
+.work-option-card__image--model {
+  background: linear-gradient(180deg, rgba(47, 120, 255, 0.16) 0%, rgba(10, 16, 34, 0.34) 100%);
 }
 
 .work-option-card__body {

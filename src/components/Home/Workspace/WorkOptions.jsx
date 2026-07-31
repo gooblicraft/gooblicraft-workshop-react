@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import PackGenerator from './PackGenerator';
 import BlockCreator from './BlockCreator';
+import ModelStorage from './ModelStorage';
 import StoreBlockTexture from './StoreBlockTexture';
 import './WorkOptions.css';
 
@@ -33,6 +34,14 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         imageLabel: 'texture creator preview',
         imageStyle: 'work-option-card__image--texture',
       },
+      {
+        id: 'model',
+        title: 'Model Storage',
+        description: 'Upload and manage Blockbench geometry files for your block models.',
+        buttonLabel: 'Open model storage',
+        imageLabel: 'Model storage preview',
+        imageStyle: 'work-option-card__image--model',
+      },
     ],
     []
   );
@@ -51,6 +60,8 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
             setTextures={setTextures} 
           />
         );
+      case 'model':
+        return <ModelStorage />;
       case 'pack':
         return <PackGenerator />;
       default:
@@ -58,7 +69,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
           <div className="work-options-empty-state">
             <h2 className="work-options-empty-state__title">Pick a workspace tool</h2>
             <p className="work-options-empty-state__text">
-              Click the first card to open the pack generator, or choose one of the other cards to load its temporary creator.
+              Click a card to open the tool you want to use.
             </p>
           </div>
         );
@@ -88,6 +99,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         <p className="work-options-subtitle">
           Choose the tool you want to open. The first card launches the pack generator,
           the second opens the block creator, and the third opens the texture creator.
+          The fourth opens model storage.
         </p>
       </section>
 
