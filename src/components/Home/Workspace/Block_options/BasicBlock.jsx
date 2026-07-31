@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-// Texture Picker Modal Component (Wala nang Header, nasa baba na ang Close)
+// Texture Picker Modal Component
 const TexturePickerModal = ({ availableTextures, blockData, handleUpdate, setIsTextureModalOpen }) => {
   const [modalSearchQuery, setModalSearchQuery] = useState('');
 
@@ -136,7 +136,7 @@ const TexturePickerModal = ({ availableTextures, blockData, handleUpdate, setIsT
   );
 };
 
-const BasicBlock = ({ availableTextures = [] }) => {
+const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -158,6 +158,10 @@ const BasicBlock = ({ availableTextures = [] }) => {
       ...prev,
       [field]: value
     }));
+    
+    if (onFormChange) {
+      onFormChange();
+    }
   };
 
   const parseBoxData = (str, defaultBox) => {
@@ -266,30 +270,20 @@ const BasicBlock = ({ availableTextures = [] }) => {
     alert("Block JSON copied to clipboard!");
   };
 
-  const saveBlockFile = async () => {
-    if (!window.showDirectoryPicker) {
-      alert('Your browser does not support folder selection.');
+  // Pinalitan ang saveBlockFile ng handleAddToQueue para dumiretso sa queue sa kanang panel
+  const handleAddToQueue = () => {
+    if (!blockData.blockName || blockData.blockName.trim() === '') {
+      alert("Please enter an Identifier Name for the block before adding to queue.");
       return;
     }
 
-    try {
-      const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      const bpHandle = await rootHandle.getDirectoryHandle('behavior_pack');
-      const blocksHandle = await bpHandle.getDirectoryHandle('blocks', { create: true });
-      
-      const fileName = `${blockData.blockName || 'custom_block'}.json`;
-      const fileHandle = await blocksHandle.getFileHandle(fileName, { create: true });
-      
-      const writable = await fileHandle.createWritable();
-      await writable.write(`${getFormattedJsonString()}\n`);
-      await writable.close();
-      
-      alert(`Successfully saved to behavior_pack/blocks/${fileName}`);
-    } catch (error) {
-      if (error && error.name !== 'AbortError') {
-        console.error(error);
-        alert('Failed to save the file.');
-      }
+    if (onAddBlock) {
+      onAddBlock({
+        ...blockData,
+        blockName: blockData.blockName.trim(),
+        fileName: `${blockData.blockName.trim()}.json`,
+        jsonContent: getFormattedJsonString()
+      });
     }
   };
 
@@ -307,15 +301,14 @@ const BasicBlock = ({ availableTextures = [] }) => {
   const selectedTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === blockData.blockTexture);
 
   return (
-    <div className="workspace-page">
+    <div className="workspace-page" >
       <div className="workspace-shell">
         
         {/* HERO SECTION */}
-        <div className="workspace-hero" style={{ textAlign: 'center', paddingBottom: '30px' }}>
+        <div className="workspace-hero" style={{ textAlign: 'center', paddingBottom: '5px', paddingTop: '0px'}}>
           <div>
             <p className="workspace-eyebrow" style={{ letterSpacing: '2px' }}>WORKSPACE</p>
             <h2 className="workspace-title">Custom Block Generator</h2>
-            <p className="workspace-subtitle">Create a minimal resource pack and behavior pack setup with a clean Minecraft-style workflow.</p>
           </div>
         </div>
 
@@ -454,8 +447,8 @@ const BasicBlock = ({ availableTextures = [] }) => {
               <button className="workspace-button workspace-button--secondary" onClick={copyToClipboard}>
                 Copy JSON
               </button>
-              <button className="workspace-button workspace-button--primary" onClick={saveBlockFile}>
-                Create / Save Block
+              <button className="workspace-button workspace-button--primary" onClick={handleAddToQueue}>
+                Add to Queue
               </button>
             </div>
           </div>

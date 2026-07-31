@@ -133,7 +133,7 @@ const TexturePickerModal = ({ availableTextures, blockData, handleUpdate, setIsT
   );
 };
 
-const RotateAbleBlock = ({ availableTextures = [] }) => {
+const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -154,6 +154,11 @@ const RotateAbleBlock = ({ availableTextures = [] }) => {
       ...prev,
       [field]: value
     }));
+    
+    // I-trigger ang warning tracker sa parent
+    if (onFormChange) {
+      onFormChange();
+    }
   };
 
   const parseBoxData = (str, defaultBox) => {
@@ -314,30 +319,21 @@ const RotateAbleBlock = ({ availableTextures = [] }) => {
     alert("Rotatable Block JSON copied to clipboard!");
   };
 
-  const saveBlockFile = async () => {
-    if (!window.showDirectoryPicker) {
-      alert('Your browser does not support folder selection.');
+  // Pinalitan natin para pumunta na muna sa Queue (Right Panel) imbis na mag-prompt ng folder picker
+  const handleAddToQueue = () => {
+    if (!blockData.blockName) {
+      alert("Please enter an Identifier Name for the block before adding to queue.");
       return;
     }
 
-    try {
-      const rootHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
-      const bpHandle = await rootHandle.getDirectoryHandle('behavior_pack');
-      const blocksHandle = await bpHandle.getDirectoryHandle('blocks', { create: true });
-      
-      const fileName = `${blockData.blockName || 'custom_rotatable_block'}.json`;
-      const fileHandle = await blocksHandle.getFileHandle(fileName, { create: true });
-      
-      const writable = await fileHandle.createWritable();
-      await writable.write(`${getFormattedJsonString()}\n`);
-      await writable.close();
-      
-      alert(`Successfully saved to behavior_pack/blocks/${fileName}`);
-    } catch (error) {
-      if (error && error.name !== 'AbortError') {
-        console.error(error);
-        alert('Failed to save the file.');
-      }
+    if (onAddBlock) {
+      onAddBlock({
+        ...blockData,
+        fileName: `${blockData.blockName}.json`,
+        jsonContent: getFormattedJsonString()
+      });
+
+      // Opsyonal: I-reset ang form o i-clear ang un-saved progress kung gusto mo pagkatapos i-add
     }
   };
 
@@ -359,11 +355,10 @@ const RotateAbleBlock = ({ availableTextures = [] }) => {
       <div className="workspace-shell">
         
         {/* HERO SECTION */}
-        <div className="workspace-hero" style={{ textAlign: 'center', paddingBottom: '30px' }}>
+        <div className="workspace-hero" style={{ textAlign: 'center', paddingBottom: '5px' }}>
           <div>
             <p className="workspace-eyebrow" style={{ letterSpacing: '2px' }}>WORKSPACE</p>
             <h2 className="workspace-title">Rotatable Block Generator</h2>
-            <p className="workspace-subtitle">Create advanced variant-based rotatable blocks for Minecraft 1.21.70.</p>
           </div>
         </div>
 
@@ -491,8 +486,8 @@ const RotateAbleBlock = ({ availableTextures = [] }) => {
               <button className="workspace-button workspace-button--secondary" onClick={copyToClipboard}>
                 Copy JSON
               </button>
-              <button className="workspace-button workspace-button--primary" onClick={saveBlockFile}>
-                Create / Save Rotatable Block
+              <button className="workspace-button workspace-button--primary" onClick={handleAddToQueue}>
+                Add to Queue
               </button>
             </div>
           </div>
