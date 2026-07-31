@@ -1,5 +1,106 @@
 import React, { useState, useEffect, useRef } from 'react';
 
+// Helper component para sa SVG preview: White glass background, light blue icon, at naka-center nang eksakto sa gitna
+const ModelSvgPreview = ({ content }) => {
+  try {
+    let geos = [];
+    if (Array.isArray(content)) {
+      geos = content;
+    } else if (content?.["minecraft:geometry"]) {
+      geos = content["minecraft:geometry"];
+    } else if (content?.format_version && content?.['minecraft:geometry']) {
+      geos = content['minecraft:geometry'];
+    }
+
+    const targetGeo = geos[0] || content;
+    const bones = targetGeo?.bones || [];
+
+    if (!bones || bones.length === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
+          No cubes data
+        </div>
+      );
+    }
+
+    const allCubes = [];
+    bones.forEach(bone => {
+      if (bone.cubes) {
+        bone.cubes.forEach(cube => {
+          allCubes.push(cube);
+        });
+      }
+    });
+
+    if (allCubes.length === 0) {
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
+          Empty bone cubes
+        </div>
+      );
+    }
+
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    allCubes.forEach(cube => {
+      const origin = cube.origin || [0, 0, 0];
+      const size = cube.size || [16, 16, 16];
+      const x = origin[0];
+      const y = origin[1];
+      const w = Math.max(size[0], 1);
+      const h = Math.max(size[1], 1);
+
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+      if (x + w > maxX) maxX = x + w;
+      if (y + h > maxY) maxY = y + h;
+    });
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2; 
+    const maxDim = Math.max(maxX - minX, maxY - minY, 24);
+    const padding = maxDim * 0.4; 
+    const vbSize = maxDim + padding * 2;
+    const vbX = centerX - vbSize / 2;
+    const vbY = centerY - vbSize / 2 - 15;
+
+    return (
+      <svg viewBox={`${vbX} ${vbY} ${vbSize} ${vbSize}`} style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+        <g transform="scale(1, -1)">
+          {allCubes.map((cube, i) => {
+            const origin = cube.origin || [0, 0, 0];
+            const size = cube.size || [16, 16, 16];
+            
+            const x = origin[0];
+            const y = origin[1];
+            const w = Math.max(size[0], 1);
+            const h = Math.max(size[1], 1);
+
+            return (
+              <rect
+                key={i}
+                x={x}
+                y={y}
+                width={w}
+                height={h}
+                fill="rgba(127, 176, 255, 0.35)"
+                stroke="#7fb0ff"
+                strokeWidth={vbSize * 0.015}
+                rx={vbSize * 0.01}
+              />
+            );
+          })}
+        </g>
+      </svg>
+    );
+  } catch (err) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#cf222e', fontSize: '0.7rem' }}>
+        Render error
+      </div>
+    );
+  }
+};
+
 const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
   const [localAvailableGeometries, setLocalAvailableGeometries] = useState(() => {
     const saved = localStorage.getItem('goobli_available_geometries');
@@ -11,28 +112,30 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const fileInputRef = useRef(null);
   
   const geometries = availableGeometries ?? localAvailableGeometries;
   
   const updateGeometries = (updater) => {
+    const nextState = typeof updater === 'function' ? updater(geometries) : updater;
+    
     if (setAvailableGeometries) {
-      setAvailableGeometries(updater);
-    } else {
-      setLocalAvailableGeometries(prev => {
-        const nextState = typeof updater === 'function' ? updater(prev) : updater;
-        try {
-          localStorage.setItem('goobli_available_geometries', JSON.stringify(nextState));
-        } catch (err) {
-          console.warn("Storage quota exceeded or heavy JSON payload.");
-        }
-        return nextState;
-      });
+      setAvailableGeometries(nextState);
+    }
+    setLocalAvailableGeometries(nextState);
+    
+    try {
+      localStorage.setItem('goobli_available_geometries', JSON.stringify(nextState));
+    } catch (err) {
+      console.warn("Storage quota exceeded or heavy JSON payload.");
+      alert("Nag-ka-quota limit ang localStorage. Masyadong malaki o marami ang mga model files.");
     }
   };
 
   useEffect(() => {
-    if (availableGeometries) {
+    if (availableGeometries && availableGeometries.length > 0) {
+      setLocalAvailableGeometries(availableGeometries);
       try {
         localStorage.setItem('goobli_available_geometries', JSON.stringify(availableGeometries));
       } catch (err) {
@@ -63,18 +166,15 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
     const newGeos = [];
     let processed = 0;
 
-    // Basahin ang mga files nang paunti-unti (chunking) para hindi mabulon ang main thread
     for (const file of validFiles) {
       try {
         const textContent = await file.text();
-        // I-parse natin para masigurong valid JSON, pero huwag i-store ang buong text kung napakalaki
         const content = JSON.parse(textContent);
         
         newGeos.push({
           name: file.name,
           path: file.webkitRelativePath || file.name,
           content: content,
-          // Gumamit tayo ng object reference o pinaikling data kung sakali
         });
       } catch (err) {
         console.error(`Skipped ${file.name}: Invalid JSON`);
@@ -83,7 +183,6 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       processed++;
       setLoadingProgress(Math.round((processed / validFiles.length) * 100));
 
-      // Mag-yield sa bawat 5 files para makahinga ang UI at hindi mag-gray out
       if (processed % 5 === 0) {
         await new Promise(resolve => setTimeout(resolve, 5));
       }
@@ -103,6 +202,16 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
     e.target.value = '';
   };
 
+  // Function para mag-delete ng specific model gamit ang path o index nito
+  const handleDeleteGeo = (targetPath) => {
+    updateGeometries(prev => prev.filter(geo => geo.path !== targetPath));
+  };
+
+  const filteredGeometries = geometries.filter(geo => 
+    geo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    geo.path.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="workspace-page" style={{ position: 'relative' }}>
       <div className="workspace-shell">
@@ -110,7 +219,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
           <div>
             <p className="workspace-eyebrow" style={{ letterSpacing: '2px' }}>RESOURCE PACK</p>
             <h2 className="workspace-title">Model Storage Manager</h2>
-            <p className="workspace-subtitle">Piliin ang iyong `models/blocks` folder para awtomatikong i-load ang lahat ng geometry files.</p>
+            <p className="workspace-subtitle">Piliin ang iyong `models/blocks` folder para awtomatikong i-load at i-save ang lahat ng geometry files.</p>
           </div>
         </div>
 
@@ -152,17 +261,40 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
             </div>
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #444c56', paddingBottom: '15px', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', margin: 0 }}>
-                  Loaded Models Library ({geometries.length})
-                </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', borderBottom: '1px solid #444c56', paddingBottom: '15px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ fontSize: '1.2rem', textTransform: 'uppercase', margin: 0 }}>
+                    Loaded Models Library ({filteredGeometries.length} {geometries.length !== filteredGeometries.length ? `/ ${geometries.length}` : ''})
+                  </h3>
+                  {geometries.length > 0 && (
+                    <button 
+                      onClick={() => updateGeometries([])}
+                      style={{ background: 'none', border: 'none', color: '#cf222e', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
+
                 {geometries.length > 0 && (
-                  <button 
-                    onClick={() => updateGeometries([])}
-                    style={{ background: 'none', border: 'none', color: '#cf222e', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}
-                  >
-                    Clear All
-                  </button>
+                  <div>
+                    <input
+                      type="text"
+                      placeholder="Maghanap ng model name o path..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        border: '1px solid #444c56',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        color: '#fff',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                    />
+                  </div>
                 )}
               </div>
 
@@ -175,39 +307,79 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                 </div>
               ) : geometries.length === 0 ? (
                 <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Wala pang nakakabit na model folder o mga JSON files.</p>
+              ) : filteredGeometries.length === 0 ? (
+                <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Walang nahanap na model na tumutugma sa "{searchQuery}".</p>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px' }}>
-                  {geometries.map((geo, index) => (
-                    <div
-                      key={index}
-                      style={{
-                        position: 'relative',
-                        border: '1px solid #444c56',
-                        borderRadius: '12px',
-                        padding: '14px',
-                        textAlign: 'left',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.02)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#7fb0ff', wordBreak: 'break-all' }}>
-                          {geo.name}
-                        </span>
-                        <span style={{ fontSize: '0.65rem', background: 'rgba(127, 176, 255, 0.15)', color: '#b8d1ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
-                          GEO
-                        </span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '20px' }}>
+                  {filteredGeometries.map((geo, index) => {
+                    return (
+                      <div
+                        key={index}
+                        style={{
+                          position: 'relative',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          borderRadius: '14px',
+                          padding: '16px',
+                          textAlign: 'left',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px',
+                          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        }}
+                      >
+                        {/* Header ng Card: Green filename, GEO badge, at Delete 'X' button */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#7ee787', wordBreak: 'break-all', lineHeight: '1.2' }}>
+                            {geo.name}
+                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                            <span style={{ fontSize: '0.65rem', background: 'rgba(127, 176, 255, 0.15)', color: '#7fb0ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                              GEO
+                            </span>
+                            <button
+                              onClick={() => handleDeleteGeo(geo.path)}
+                              title="Delete model"
+                              style={{
+                                background: 'rgba(207, 34, 46, 0.15)',
+                                border: '1px solid rgba(207, 34, 46, 0.3)',
+                                color: '#ff7b72',
+                                width: '20px',
+                                height: '20px',
+                                borderRadius: '4px',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                cursor: 'pointer',
+                                padding: 0,
+                                lineHeight: 1
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* MISMONG VISUAL MODEL PREVIEW */}
+                        <div style={{ 
+                          width: '100%', 
+                          height: '130px', 
+                          background: 'rgba(0, 0, 0, 0.2)', 
+                          borderRadius: '10px', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          border: '1px solid rgba(255, 255, 255, 0.08)',
+                          overflow: 'hidden',
+                          padding: '12px'
+                        }}>
+                          <ModelSvgPreview content={geo.content} />
+                        </div>
                       </div>
-                      <span style={{ fontSize: '0.7rem', opacity: 0.5, wordBreak: 'break-all' }}>
-                        Path: {geo.path}
-                      </span>
-                      <span style={{ fontSize: '0.75rem', opacity: 0.7, color: '#7ee787', marginTop: '4px' }}>
-                        Identifier: {geo.name.replace(/\.[^/.]+$/, "")}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
