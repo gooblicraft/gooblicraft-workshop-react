@@ -337,8 +337,8 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                 </label>
               </div>
 
-              {/* ROW 2 */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+              {/* ROW 2: Category Menu, Category Group, Block Model */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Category Menu:</span>
                   <select className="workspace-input" style={{ width: '100%' }} value={blockData.blockGroupMenu} onChange={(e) => handleUpdate('blockGroupMenu', e.target.value)}>
@@ -358,9 +358,13 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                   <span style={{ marginBottom: '8px' }}>Block Model:</span>
                   <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockGeometry} onChange={(e) => handleUpdate('blockGeometry', e.target.value)} placeholder="custom_block_geo" />
                 </label>
+              </div>
 
-                {/* CARD-STYLE TEXTURE SELECTOR BUTTON / PREVIEW */}
-                <label className="workspace-label" style={labelStyle}>
+              {/* ROW 3: Block Texture (Sakop ang 2 columns) at Render Method (Sakop ang 1 column sa tabi) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
+                
+                {/* BLOCK TEXTURE - Nakabalandra at sumasakop sa 2 columns */}
+                <label className="workspace-label" style={{ ...labelStyle, gridColumn: 'span 2' }}>
                   <span style={{ marginBottom: '8px' }}>Block Texture:</span>
                   <div 
                     onClick={() => setIsTextureModalOpen(true)}
@@ -374,7 +378,8 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                       borderRadius: '8px',
                       cursor: 'pointer',
                       width: '100%',
-                      minHeight: '42px'
+                      minHeight: '42px',
+                      boxSizing: 'border-box'
                     }}
                   >
                     {selectedTexObj ? (
@@ -388,11 +393,9 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                     <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '2px 8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}>Browse</span>
                   </div>
                 </label>
-              </div>
 
-              {/* ROW 3 */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
-                <label className="workspace-label" style={{ ...labelStyle }}>
+                {/* RENDER METHOD - Katabi ng Block Texture sa ika-3 column */}
+                <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Render Method:</span>
                   <select className="workspace-input" style={{ width: '100%' }} value={blockData.blockRender} onChange={(e) => handleUpdate('blockRender', e.target.value)}>
                     <option value="opaque">Opaque</option>
@@ -401,10 +404,10 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                     <option value="alpha_test_single_sided">Alpha Single Sided</option>
                   </select>
                 </label>
-                <div style={{ width: '100%' }}></div>
-                <div style={{ width: '100%' }}></div>
-                <div style={{ width: '100%' }}></div>
+
               </div>
+
+              {/* ROW 3 */}
 
               {/* HITBOXES */}
               <div style={{ border: '1px dashed #444c56', borderRadius: '16px', padding: '30px', textAlign: 'center', marginTop: '10px' }}>
