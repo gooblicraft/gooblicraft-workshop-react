@@ -99,7 +99,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
       overflow: 'hidden',
       margin: 0,
       padding: 0,
-      fontSize: '0.75rem' // Pangkalahatang pinaliit na base font size
+      fontSize: '0.75rem'
     }}>
       
       {/* LEFT SIDEBAR: BLOCK TYPES */}
@@ -133,10 +133,10 @@ const BlockCreator = ({ availableTextures = [] }) => {
             textAlign: 'left',
             fontSize: '0.75rem',
             fontWeight: 'bold',
-            borderRadius: '5px',
+            borderRadius: '8px',
             cursor: 'pointer',
-            border: activeOption === 'basic' ? '1px solid #7ee787' : '1px solid #30363d',
-            backgroundColor: activeOption === 'basic' ? 'rgba(126, 231, 135, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+            border: activeOption === 'basic' ? '1px solid #7ee787' : '1px solid #444c56',
+            backgroundColor: activeOption === 'basic' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
             color: activeOption === 'basic' ? '#7ee787' : '#c9d1d9',
             transition: 'all 0.2s ease'
           }}
@@ -152,10 +152,10 @@ const BlockCreator = ({ availableTextures = [] }) => {
             textAlign: 'left',
             fontSize: '0.75rem',
             fontWeight: 'bold',
-            borderRadius: '5px',
+            borderRadius: '8px',
             cursor: 'pointer',
-            border: activeOption === 'rotatable' ? '1px solid #7ee787' : '1px solid #30363d',
-            backgroundColor: activeOption === 'rotatable' ? 'rgba(126, 231, 135, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+            border: activeOption === 'rotatable' ? '1px solid #7ee787' : '1px solid #444c56',
+            backgroundColor: activeOption === 'rotatable' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
             color: activeOption === 'rotatable' ? '#7ee787' : '#c9d1d9',
             transition: 'all 0.2s ease'
           }}
