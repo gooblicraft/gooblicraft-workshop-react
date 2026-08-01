@@ -72,14 +72,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
       case 'pack':
         return <PackGenerator />;
       default:
-        return (
-          <div className="work-options-empty-state">
-            <h2 className="work-options-empty-state__title">Pick a workspace tool</h2>
-            <p className="work-options-empty-state__text">
-              Click a card to open the tool you want to use.
-            </p>
-          </div>
-        );
+        return null;
     }
   };
 
@@ -115,7 +108,20 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
           const isActive = selectedTool === option.id;
 
           return (
-            <article key={option.id} className={`work-option-card${isActive ? ' work-option-card--active' : ''}`}>
+            <article
+              key={option.id}
+              className={`work-option-card${isActive ? ' work-option-card--active' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-label={option.buttonLabel}
+              onClick={() => setSelectedTool(option.id)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  setSelectedTool(option.id);
+                }
+              }}
+            >
               <div className={`work-option-card__image ${option.imageStyle}`} aria-hidden="true">
                 <img
                   src={option.icon}
@@ -126,21 +132,11 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
               <div className="work-option-card__body">
                 <h2 className="work-option-card__title">{option.title}</h2>
                 <p className="work-option-card__description">{option.description}</p>
-                <button
-                  type="button"
-                  className="work-option-card__button"
-                  onClick={() => setSelectedTool(option.id)}
-                  aria-label={option.imageLabel}
-                >
-                  {option.buttonLabel}
-                </button>
               </div>
             </article>
           );
         })}
       </section>
-
-      <section className="work-options-content">{renderSelectedTool()}</section>
     </div>
   );
 };
