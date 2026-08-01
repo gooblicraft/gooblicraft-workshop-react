@@ -1,7 +1,10 @@
 .work-options-page {
   min-height: 100vh;
   padding: 18px 20px 28px;
-  background: radial-gradient(ellipse at 50% 0%, rgba(45, 20, 65, 0.6) 0%, rgba(18, 8, 22, 0.95) 50%, #0a0510 100%);
+  background:
+    radial-gradient(circle at top center, rgba(65, 145, 255, 0.24) 0%, rgba(65, 145, 255, 0.08) 22%, transparent 52%),
+    radial-gradient(circle at 50% 20%, rgba(35, 90, 175, 0.14) 0%, transparent 34%),
+    radial-gradient(ellipse at 50% 0%, rgba(18, 32, 58, 0.94) 0%, rgba(8, 12, 20, 0.98) 50%, #050912 100%);
   color: #f6ebff;
   font-family: 'Minecraft-Regular', sans-serif;
 }
@@ -9,7 +12,10 @@
 .work-options-tool-screen {
   position: relative;
   min-height: 100vh;
-  background: radial-gradient(ellipse at 50% 20%, rgba(40, 18, 58, 0.5) 0%, rgba(14, 6, 18, 0.98) 60%, #080410 100%);
+  background:
+    radial-gradient(circle at top center, rgba(65, 145, 255, 0.18) 0%, rgba(65, 145, 255, 0.05) 28%, transparent 52%),
+    radial-gradient(circle at 50% 20%, rgba(30, 70, 135, 0.12) 0%, transparent 34%),
+    radial-gradient(ellipse at 50% 20%, rgba(12, 20, 36, 0.94) 0%, rgba(6, 8, 14, 0.98) 60%, #03050a 100%);
 }
 
 .work-options-back-button {
@@ -17,84 +23,85 @@
   top: 20px;
   left: 20px;
   z-index: 20;
-  border: 1px solid rgba(214, 176, 255, 0.2);
+  border: 1px solid rgba(145, 195, 255, 0.32);
   border-radius: 8px;
   padding: 10px 14px;
-  background: rgba(20, 10, 30, 0.6);
+  background: linear-gradient(180deg, rgba(28, 44, 74, 0.78) 0%, rgba(12, 18, 30, 0.84) 100%);
   color: #f5ecff;
   font-family: 'Minecraft-Regular', sans-serif;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   cursor: pointer;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(73, 128, 220, 0.06);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transition: all 0.2s ease;
 }
 
 .work-options-back-button:hover {
-  background: rgba(40, 18, 58, 0.7);
-  border-color: rgba(214, 176, 255, 0.35);
+  background: linear-gradient(180deg, rgba(35, 60, 102, 0.9) 0%, rgba(12, 18, 30, 0.92) 100%);
+  border-color: rgba(160, 210, 255, 0.5);
   transform: translateY(-1px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .workspace-page--purple {
-  background: radial-gradient(ellipse at 50% 30%, rgba(38, 16, 52, 0.45) 0%, rgba(12, 6, 16, 0.98) 55%, #080410 100%);
+  background: radial-gradient(ellipse at 50% 30%, rgba(34, 70, 128, 0.24) 0%, rgba(7, 10, 18, 0.98) 55%, #04070d 100%);
 }
 
 .workspace-page--purple .workspace-eyebrow {
-  color: #c9a0f0;
+  color: #9bc9ff;
 }
 
 .workspace-page--purple .workspace-title {
-  color: #fbf6ff;
+  color: #f8fbff;
 }
 
 .workspace-page--purple .workspace-subtitle {
-  color: rgba(245, 236, 255, 0.65);
+  color: rgba(230, 240, 255, 0.76);
 }
 
 .workspace-page--purple .workspace-panel,
 .workspace-page--purple .workspace-preview-panel {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(214, 176, 255, 0.1);
+  background: linear-gradient(180deg, rgba(26, 38, 60, 0.6) 0%, rgba(10, 14, 24, 0.76) 100%);
+  border: 1px solid rgba(145, 195, 255, 0.2);
   border-radius: 16px;
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(84, 132, 204, 0.06);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
 
 .workspace-page--purple .workspace-label {
-  color: rgba(234, 217, 255, 0.8);
+  color: rgba(220, 236, 255, 0.9);
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .workspace-page--purple .workspace-input {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(214, 176, 255, 0.1);
+  background: rgba(13, 20, 34, 0.68);
+  border: 1px solid rgba(145, 195, 255, 0.18);
   border-radius: 8px;
-  color: rgba(250, 244, 255, 0.7);
+  color: rgba(248, 252, 255, 0.9);
   transition: all 0.2s ease;
 }
 
 .workspace-page--purple .workspace-input::placeholder {
-  color: rgba(214, 176, 255, 0.35);
+  color: rgba(198, 216, 240, 0.48);
 }
 
 .workspace-page--purple .workspace-input:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(214, 176, 255, 0.2);
+  background: rgba(15, 24, 40, 0.78);
+  border-color: rgba(145, 195, 255, 0.28);
 }
 
 .workspace-page--purple .workspace-input:focus {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(214, 176, 255, 0.3);
-  box-shadow: 0 0 0 3px rgba(146, 61, 209, 0.1);
+  background: rgba(16, 26, 44, 0.88);
+  border-color: rgba(145, 195, 255, 0.44);
+  box-shadow: 0 0 0 3px rgba(88, 150, 255, 0.18);
   outline: none;
 }
 
@@ -114,13 +121,13 @@
   font-size: 0.72rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
-  color: rgba(200, 160, 240, 0.7);
+  color: rgba(157, 204, 255, 0.9);
 }
 
 .work-options-title {
     font-family: 'Minecraft-Ten', sans-serif;
   margin: 0;
-  color: rgba(255, 250, 255, 0.95);
+  color: rgba(250, 253, 255, 0.98);
   font-size: clamp(2.2rem, 4vw, 4rem);
   line-height: 0.95;
   text-transform: uppercase;
@@ -130,7 +137,7 @@
 .work-options-subtitle {
   max-width: 820px;
   margin: 12px auto 0;
-  color: rgba(246, 235, 255, 0.55);
+  color: rgba(228, 238, 255, 0.7);
   font-size: 0.84rem;
   line-height: 1.55;
 }
@@ -149,13 +156,14 @@
 }
 
 .work-option-card {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(214, 176, 255, 0.1);
+  background: linear-gradient(180deg, rgba(24, 36, 58, 0.72) 0%, rgba(10, 16, 26, 0.84) 100%);
+  border: 1px solid rgba(145, 195, 255, 0.22);
   border-radius: 12px;
   padding: 12px 12px 14px;
   box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+    0 10px 34px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 0 0 1px rgba(79, 131, 211, 0.05);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transition: all 0.25s ease;
@@ -163,31 +171,33 @@
 }
 
 .work-option-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(214, 176, 255, 0.18);
+  background: linear-gradient(180deg, rgba(30, 48, 74, 0.86) 0%, rgba(12, 18, 30, 0.92) 100%);
+  border-color: rgba(165, 210, 255, 0.34);
   transform: translateY(-2px);
   box-shadow: 
-    0 16px 48px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 18px 52px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 24px rgba(72, 132, 255, 0.08);
 }
 
 .work-option-card--active {
-  outline: 2px solid rgba(214, 176, 255, 0.5);
+  outline: 2px solid rgba(165, 210, 255, 0.54);
   outline-offset: 2px;
 }
 
 .work-option-card:focus-visible {
-  outline: 2px solid rgba(214, 176, 255, 0.8);
+  outline: 2px solid rgba(180, 220, 255, 0.92);
   outline-offset: 3px;
 }
 
 .work-option-card__image {
   aspect-ratio: 1 / 1;
-  background: transparent;
-  border: 0;
+  background: linear-gradient(180deg, rgba(30, 52, 88, 0.74) 0%, rgba(10, 16, 26, 0.9) 100%);
+  border: 1px solid rgba(165, 210, 255, 0.18);
   border-radius: 16px;
   position: relative;
   overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 24px rgba(80, 140, 255, 0.08);
 }
 
 .work-option-card__image--pack {
@@ -224,7 +234,7 @@
 .work-option-card__title {
     font-family: 'Minecraft-Ten', sans-serif;
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(250, 253, 255, 0.98);
   font-size: 1.45rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -233,7 +243,7 @@
 .work-option-card__description {
   min-height: 54px;
   margin: 10px 0 0;
-  color: rgba(241, 226, 255, 0.55);
+  color: rgba(220, 235, 250, 0.68);
   font-size: 0.8rem;
   line-height: 1.45;
 }
