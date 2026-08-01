@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import ModelPickerModal from '../ModelPickerModal';
 import TexturePickerModal from '../TexturePickerModal';
 
-// Manifest Preview Modal Component
 const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview }) => {
   return (
     <div style={{
@@ -84,13 +83,15 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
     blockGeometry: '',
     blockTexture: '',
     blockRender: 'opaque',
-    collisionBox: 'false',
-    selectionBox: '{\n  "origin": [-6, 0, -6],\n  "size": [12, 11, 12]\n}'
+    materialInstances: [],
+    collisionBox: '',
+    selectionBox: ''
   });
 
   const [showPreview, setShowPreview] = useState(false);
   const [isTextureModalOpen, setIsTextureModalOpen] = useState(false);
-  const [isModelModalOpen, setIsModelModalOpen] = useState(false); // State para sa Model Modal
+  const [isModelModalOpen, setIsModelModalOpen] = useState(false);
+  const [activeTextureTarget, setActiveTextureTarget] = useState('default');
 
   const handleUpdate = (field, value) => {
     setBlockData((prev) => ({
@@ -103,8 +104,30 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
     }
   };
 
+  const handleAddMaterialInstance = () => {
+    if (blockData.materialInstances.length >= 10) {
+      alert("Maaari lamang magdagdag ng hanggang 10 karagdagang material instances.");
+      return;
+    }
+    const newInstances = [
+      ...blockData.materialInstances,
+      { materialName: '', texture: '', renderMethod: 'opaque' }
+    ];
+    handleUpdate('materialInstances', newInstances);
+  };
+
+  const handleUpdateMaterialInstance = (index, field, value) => {
+    const updated = [...blockData.materialInstances];
+    updated[index][field] = value;
+    handleUpdate('materialInstances', updated);
+  };
+
+  const handleRemoveMaterialInstance = (index) => {
+    const updated = blockData.materialInstances.filter((_, i) => i !== index);
+    handleUpdate('materialInstances', updated);
+  };
+
   const parseBoxData = (str, defaultBox) => {
-    if (str.trim().toLowerCase() === 'false') return false;
     const dataToParse = str.trim() ? str : defaultBox;
     try {
       return JSON.parse(dataToParse);
@@ -120,7 +143,22 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
     const geo = blockData.blockGeometry || 'custom_block_geo';
     const tex = blockData.blockTexture || 'custom_block_texture';
     
-    const defaultSelectionBox = '{\n  "origin": [-6, 0, -6],\n  "size": [12, 11, 12]\n}';
+    const defaultBox = '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}';
+
+    const materialInstancesObj = {};
+
+    blockData.materialInstances.forEach((inst) => {
+      const matName = inst.materialName.trim() || 'material_name';
+      materialInstancesObj[matName] = {
+        "texture": inst.texture || 'texture_name',
+        "render_method": inst.renderMethod || 'opaque'
+      };
+    });
+
+    materialInstancesObj["*"] = {
+      "texture": tex,
+      "render_method": blockData.blockRender
+    };
 
     return {
       "format_version": "1.21.70",
@@ -217,14 +255,9 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
               "right": false
             }
           },
-          "minecraft:material_instances": {
-            "*": {
-              "texture": tex,
-              "render_method": blockData.blockRender
-            }
-          },
-          "minecraft:collision_box": parseBoxData(blockData.collisionBox, 'false'),
-          "minecraft:selection_box": parseBoxData(blockData.selectionBox, defaultSelectionBox),
+          "minecraft:material_instances": materialInstancesObj,
+          "minecraft:collision_box": parseBoxData(blockData.collisionBox, defaultBox),
+          "minecraft:selection_box": parseBoxData(blockData.selectionBox, defaultBox),
           "minecraft:light_dampening": 0,
           "minecraft:light_emission": 0,
           "minecraft:custom_components": [
@@ -365,53 +398,150 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
                 </label>
               </div>
 
-              {/* ROW 3: Block Texture at Render Method */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '24px' }}>
-                <label className="workspace-label" style={{ ...labelStyle, gridColumn: 'span 2' }}>
-                  <span style={{ marginBottom: '8px' }}>Block Texture:</span>
-                  <div 
-                    onClick={() => setIsTextureModalOpen(true)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                      border: '1px solid #444c56',
-                      borderRadius: '8px',
+              {/* MATERIAL INSTANCES SECTION */}
+              <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backgroundColor: 'transparent' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <h3 style={{ margin: 0, fontSize: '0.9rem', color: '#7fb0ff', textTransform: 'uppercase' }}>Material Instances (Textures & Renders)</h3>
+                  <button 
+                    onClick={handleAddMaterialInstance}
+                    style={{ 
+                      padding: '6px 12px', 
+                      fontSize: '0.75rem', 
+                      backgroundColor: 'rgba(126, 231, 135, 0.15)', 
+                      border: '1px solid #7ee787', 
+                      borderRadius: '6px', 
+                      color: '#7ee787', 
                       cursor: 'pointer',
-                      width: '100%',
-                      minHeight: '42px',
-                      boxSizing: 'border-box'
+                      fontWeight: 'bold'
                     }}
                   >
-                    {selectedTexObj ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <img src={selectedTexObj.url} alt="" style={{ width: '24px', height: '24px', objectFit: 'contain', imageRendering: 'pixelated' }} />
-                        <span style={{ fontSize: '0.8rem', color: '#7ee787' }}>{selectedTexObj.name}</span>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: '0.8rem', opacity: 0.5 }}>Select texture...</span>
-                    )}
-                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', padding: '2px 8px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '4px' }}>Browse</span>
-                  </div>
-                </label>
+                    + Add Material ({blockData.materialInstances.length}/10)
+                  </button>
+                </div>
 
-                <label className="workspace-label" style={labelStyle}>
-                  <span style={{ marginBottom: '8px' }}>Render Method:</span>
-                  <select className="workspace-input" style={{ width: '100%' }} value={blockData.blockRender} onChange={(e) => handleUpdate('blockRender', e.target.value)}>
-                    <option value="opaque">Opaque</option>
-                    <option value="alpha_test">Alpha Test</option>
-                    <option value="blend">Blend</option>
-                    <option value="alpha_test_single_sided">Alpha Single Sided</option>
-                  </select>
-                </label>
+                {blockData.materialInstances.map((inst, index) => {
+                  const customTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === inst.texture);
+
+                  return (
+                    <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'center', marginBottom: '12px', backgroundColor: 'transparent', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                      <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
+                        <span style={{ marginBottom: '4px' }}>Material Name:</span>
+                        <input 
+                          type="text" 
+                          className="workspace-input" 
+                          value={inst.materialName} 
+                          onChange={(e) => handleUpdateMaterialInstance(index, 'materialName', e.target.value)} 
+                          placeholder="material_name" 
+                          style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem' }}
+                        />
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
+                        <span style={{ marginBottom: '4px' }}>Texture:</span>
+                        <div 
+                          onClick={() => {
+                            setActiveTextureTarget(index);
+                            setIsTextureModalOpen(true);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '6px 10px',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid #444c56',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            minHeight: '32px'
+                          }}
+                        >
+                          {customTexObj ? (
+                            <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name}</span>
+                          ) : (
+                            <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select texture...</span>
+                          )}
+                          <span style={{ fontSize: '0.65rem', padding: '1px 6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>Browse</span>
+                        </div>
+                      </label>
+
+                      <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
+                        <span style={{ marginBottom: '4px' }}>Render Method:</span>
+                        <select 
+                          className="workspace-input" 
+                          style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem' }} 
+                          value={inst.renderMethod} 
+                          onChange={(e) => handleUpdateMaterialInstance(index, 'renderMethod', e.target.value)}
+                        >
+                          <option value="opaque">Opaque</option>
+                          <option value="alpha_test">Alpha Test</option>
+                          <option value="blend">Blend</option>
+                          <option value="alpha_test_single_sided">Alpha Single Sided</option>
+                        </select>
+                      </label>
+
+                      <button 
+                        onClick={() => handleRemoveMaterialInstance(index)}
+                        style={{ background: 'rgba(215, 58, 73, 0.2)', border: '1px solid #da3633', color: '#ff7b72', width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginTop: '16px' }}
+                        title="Remove Material"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  );
+                })}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '12px', alignItems: 'center', backgroundColor: 'rgba(127, 176, 255, 0.05)', padding: '12px', borderRadius: '10px', border: '1px dashed #7fb0ff' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#7fb0ff', textTransform: 'uppercase' }}>
+                    * (Default All)
+                  </div>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
+                    <span style={{ marginBottom: '4px' }}>Default Texture:</span>
+                    <div 
+                      onClick={() => {
+                        setActiveTextureTarget('default');
+                        setIsTextureModalOpen(true);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '6px 10px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid #444c56',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        minHeight: '32px'
+                      }}
+                    >
+                      {selectedTexObj ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <img src={selectedTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name}</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select default texture...</span>
+                      )}
+                      <span style={{ fontSize: '0.65rem', padding: '1px 6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px' }}>Browse</span>
+                    </div>
+                  </label>
+
+                  <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
+                    <span style={{ marginBottom: '4px' }}>Default Render:</span>
+                    <select className="workspace-input" style={{ width: '100%', padding: '6px 10px', fontSize: '0.8rem' }} value={blockData.blockRender} onChange={(e) => handleUpdate('blockRender', e.target.value)}>
+                      <option value="opaque">Opaque</option>
+                      <option value="alpha_test">Alpha Test</option>
+                      <option value="blend">Blend</option>
+                      <option value="alpha_test_single_sided">Alpha Single Sided</option>
+                    </select>
+                  </label>
+                </div>
               </div>
 
               {/* HITBOXES */}
               <div style={{ border: '1px dashed #444c56', borderRadius: '16px', padding: '30px', textAlign: 'center', marginTop: '10px' }}>
                 <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>Custom Hitboxes</h3>
-                <p style={{ opacity: 0.7, fontSize: '0.85rem', marginBottom: '24px' }}>Type 'false' or paste your Blockbench JSON array/object here.</p>
+                <p style={{ opacity: 0.7, fontSize: '0.85rem', marginBottom: '24px' }}>Drop or paste your Blockbench JSON array here.</p>
                 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
                   <label className="workspace-label" style={{ display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
@@ -422,7 +552,7 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
                       rows={5} 
                       value={blockData.collisionBox}
                       onChange={(e) => handleUpdate('collisionBox', e.target.value)}
-                      placeholder='false'
+                      placeholder='[{"origin": [-8, 0, -8], "size": [16, 16, 16]}]'
                     />
                   </label>
 
@@ -434,7 +564,7 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
                       rows={5} 
                       value={blockData.selectionBox}
                       onChange={(e) => handleUpdate('selectionBox', e.target.value)}
-                      placeholder='{"origin": [-6, 0, -6], "size": [12, 11, 12]}'
+                      placeholder='[{"origin": [-8, 0, -8], "size": [16, 16, 16]}]'
                     />
                   </label>
                 </div>
@@ -462,8 +592,14 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
       {isTextureModalOpen && (
         <TexturePickerModal 
           availableTextures={availableTextures} 
-          currentSelected={blockData.blockTexture}
-          onSelect={(cleanName) => handleUpdate('blockTexture', cleanName)}
+          currentSelected={activeTextureTarget === 'default' ? blockData.blockTexture : blockData.materialInstances[activeTextureTarget]?.texture}
+          onSelect={(cleanName) => {
+            if (activeTextureTarget === 'default') {
+              handleUpdate('blockTexture', cleanName);
+            } else {
+              handleUpdateMaterialInstance(activeTextureTarget, 'texture', cleanName);
+            }
+          }}
           onClose={() => setIsTextureModalOpen(false)}
         />
       )}

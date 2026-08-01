@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import BasicBlock from './Block_options/BasicBlock';
 import RotateAbleBlock from './Block_options/RotateAbleBlock';
 
@@ -7,18 +7,36 @@ const BlockCreator = ({ availableTextures = [] }) => {
   const [createdBlocks, setCreatedBlocks] = useState([]);
   const [hasUnsavedProgress, setHasUnsavedProgress] = useState(false);
 
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Para sa Left Sidebar sa mobile
+  const [mobileQueueOpen, setMobileQueueOpen] = useState(false); // Para sa Queue Sidebar sa mobile
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 900;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMobileMenuOpen(false);
+        setMobileQueueOpen(false);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleTabSwitch = (nextOption) => {
     if (activeOption === nextOption) return;
 
     if (hasUnsavedProgress) {
       const confirmSwitch = window.confirm(
-        "Mayroon kang hindi pa naidaragdag sa queue na progress sa kasalukuyang block. Gusto mo bang ituloy at mawawala ang iyong ginagawa?"
+        "Do you want to discontinue your current progress before we proceed?"
       );
       if (!confirmSwitch) return;
     }
 
     setActiveOption(nextOption);
     setHasUnsavedProgress(false);
+    setMobileMenuOpen(false); // Isara ang menu pagkapili sa mobile
   };
 
   const handleAddBlockToQueue = (blockData, blockType) => {
@@ -35,7 +53,16 @@ const BlockCreator = ({ availableTextures = [] }) => {
   };
 
   const handleRemoveFromQueue = (indexToRemove) => {
-    setCreatedBlocks(prev => prev.filter((_, index) => index !== indexToRemove));
+    const blockToDelete = createdBlocks[indexToRemove];
+    const blockName = blockToDelete?.blockName || 'custom_block';
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to remove "${blockName}" from the queue?`
+    );
+
+    if (confirmDelete) {
+      setCreatedBlocks(prev => prev.filter((_, index) => index !== indexToRemove));
+    }
   };
 
   const handleClearQueue = () => {
@@ -93,179 +120,248 @@ const BlockCreator = ({ availableTextures = [] }) => {
   return (
     <div className="workspace-page" style={{ 
       display: 'flex', 
+      flexDirection: 'column',
       height: 'calc(100vh - 60px)', 
       width: '100%', 
       boxSizing: 'border-box',
       overflow: 'hidden',
       margin: 0,
       padding: 0,
-      fontSize: '0.75rem'
+      fontSize: '0.75rem',
+      position: 'relative'
     }}>
       
-      {/* LEFT SIDEBAR: BLOCK TYPES */}
-      <div style={{
-        width: '180px',
-        backgroundColor: 'rgba(22, 27, 34, 0.8)',
-        borderRight: '1px solid #30363d',
-        padding: '10px 8px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        flexShrink: 0
-      }}>
-        <p style={{ 
-          fontSize: '0.6rem', 
-          fontWeight: 'bold', 
-          letterSpacing: '1px', 
-          color: '#8b949e', 
-          marginBottom: '2px',
-          paddingLeft: '4px',
-          textTransform: 'uppercase' 
+      {/* MOBILE TOP CONTROLS BAR (Lilitaw lang kapag mobile/tablet view) */}
+      {isMobile && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          backgroundColor: '#161b22',
+          borderBottom: '1px solid #30363d',
+          padding: '8px 12px',
+          flexShrink: 0,
+          zIndex: 10
         }}>
-          Block Types
-        </p>
+          <button
+            onClick={() => { setMobileMenuOpen(!mobileMenuOpen); setMobileQueueOpen(false); }}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: 'rgba(126, 231, 135, 0.1)',
+              border: '1px solid #7ee787',
+              borderRadius: '6px',
+              color: '#7ee787',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '0.75rem'
+            }}
+          >
+            {mobileMenuOpen ? '✕ Close Menu' : '📂 Block Types'}
+          </button>
 
-        <button
-          onClick={() => handleTabSwitch('basic')}
-          style={{
-            width: '100%',
-            padding: '6px 10px',
-            textAlign: 'left',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            border: activeOption === 'basic' ? '1px solid #7ee787' : '1px solid #444c56',
-            backgroundColor: activeOption === 'basic' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
-            color: activeOption === 'basic' ? '#7ee787' : '#c9d1d9',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          Basic Block
-        </button>
+          <span style={{ color: '#c9d1d9', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.7rem' }}>
+            {activeOption === 'basic' ? 'Basic Block' : 'Rotatable Block'}
+          </span>
 
-        <button
-          onClick={() => handleTabSwitch('rotatable')}
-          style={{
-            width: '100%',
-            padding: '6px 10px',
-            textAlign: 'left',
-            fontSize: '0.75rem',
-            fontWeight: 'bold',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            border: activeOption === 'rotatable' ? '1px solid #7ee787' : '1px solid #444c56',
-            backgroundColor: activeOption === 'rotatable' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
-            color: activeOption === 'rotatable' ? '#7ee787' : '#c9d1d9',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          Rotatable Block
-        </button>
-      </div>
+          <button
+            onClick={() => { setMobileQueueOpen(!mobileQueueOpen); setMobileMenuOpen(false); }}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: 'rgba(47, 120, 255, 0.1)',
+              border: '1px solid #7fb0ff',
+              borderRadius: '6px',
+              color: '#7fb0ff',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '0.75rem'
+            }}
+          >
+            {mobileQueueOpen ? '✕ Close Queue' : `📦 Queue (${createdBlocks.length})`}
+          </button>
+        </div>
+      )}
 
-      {/* MIDDLE CONTENT AREA */}
-      <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#0d1117' }}>
-        {activeOption === 'basic' ? (
-          <BasicBlock 
-            availableTextures={availableTextures} 
-            onAddBlock={(data) => handleAddBlockToQueue(data, 'Basic')}
-            onFormChange={() => setHasUnsavedProgress(true)}
-          />
-        ) : (
-          <RotateAbleBlock 
-            availableTextures={availableTextures} 
-            onAddBlock={(data) => handleAddBlockToQueue(data, 'Rotatable')} 
-            onFormChange={() => setHasUnsavedProgress(true)}
-          />
-        )}
-      </div>
+      {/* MAIN BODY CONTAINER */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', width: '100%' }}>
+        
+        {/* LEFT SIDEBAR: BLOCK TYPES (Desktop: static sidebar, Mobile: Overlay Drawer) */}
+        <div style={{
+          width: '180px',
+          backgroundColor: isMobile ? '#0d1117' : 'transparent',
+          borderRight: '1px solid #30363d',
+          padding: '10px 8px',
+          display: isMobile && !mobileMenuOpen ? 'none' : 'flex',
+          flexDirection: 'column',
+          gap: '6px',
+          flexShrink: 0,
+          position: isMobile ? 'absolute' : 'relative',
+          top: 0,
+          left: 0,
+          height: '100%',
+          zIndex: 100,
+          boxShadow: isMobile ? '4px 0 15px rgba(0,0,0,0.5)' : 'none'
+        }}>
+          <p style={{ 
+            fontSize: '0.6rem', 
+            fontWeight: 'bold', 
+            letterSpacing: '1px', 
+            color: '#8b949e', 
+            marginBottom: '2px',
+            paddingLeft: '4px',
+            textTransform: 'uppercase' 
+          }}>
+            Block Types
+          </p>
 
-      {/* RIGHT SIDEBAR: QUEUE & SAVE ALL */}
-      <div style={{
-        width: '240px',
-        backgroundColor: 'rgba(22, 27, 34, 0.8)',
-        borderLeft: '1px solid #30363d',
-        padding: '10px',
-        display: 'flex',
-        flexDirection: 'column',
-        flexShrink: 0,
-        boxSizing: 'border-box'
-      }}>
-        <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px', color: '#ffffff', borderBottom: '1px solid #30363d', paddingBottom: '6px', marginTop: 0 }}>
-          Block Queue ({createdBlocks.length})
-        </h3>
+          <button
+            onClick={() => handleTabSwitch('basic')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'basic' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'basic' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'basic' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Basic Block
+          </button>
 
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
-          {createdBlocks.length === 0 ? (
-            <p style={{ fontSize: '0.7rem', opacity: 0.5, textAlign: 'center', marginTop: '20px' }}>
-              No blocks in queue.
-            </p>
+          <button
+            onClick={() => handleTabSwitch('rotatable')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'rotatable' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'rotatable' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'rotatable' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Rotatable Block
+          </button>
+        </div>
+
+        {/* MIDDLE CONTENT AREA */}
+        <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#0d1117', width: '100%', boxSizing: 'border-box' }}>
+          {activeOption === 'basic' ? (
+            <BasicBlock 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, 'Basic')}
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
           ) : (
-            createdBlocks.map((block, index) => (
-              <div key={index} style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid #30363d',
-                borderRadius: '5px',
-                padding: '6px 8px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <p style={{ margin: '0 0 1px 0', fontSize: '0.75rem', fontWeight: 'bold', color: '#7ee787' }}>
-                    {block.blockName || 'custom_block'}
-                  </p>
-                  <span style={{ fontSize: '0.6rem', opacity: 0.7, backgroundColor: 'rgba(255,255,255,0.08)', padding: '1px 3px', borderRadius: '3px' }}>
-                    {block.blockType}
-                  </span>
-                </div>
-                <button 
-                  onClick={() => handleRemoveFromQueue(index)}
-                  style={{ background: 'none', border: 'none', color: '#da3633', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
-                  title="Remove"
-                >
-                  ✕
-                </button>
-              </div>
-            ))
+            <RotateAbleBlock 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, 'Rotatable')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', paddingTop: '6px', borderTop: '1px solid #30363d' }}>
-          <button 
-            onClick={handleClearQueue}
-            style={{
-              flex: 1,
-              padding: '6px',
-              backgroundColor: '#da3633',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '0.7rem'
-            }}
-          >
-            Clear
-          </button>
+        {/* RIGHT SIDEBAR: QUEUE & SAVE ALL (Desktop: static sidebar, Mobile: Overlay Drawer) */}
+        <div style={{
+          width: isMobile ? '260px' : '240px',
+          backgroundColor: 'rgba(22, 27, 34, 0.95)',
+          borderLeft: '1px solid #30363d',
+          padding: '10px',
+          display: isMobile && !mobileQueueOpen ? 'none' : 'flex',
+          flexDirection: 'column',
+          flexShrink: 0,
+          boxSizing: 'border-box',
+          position: isMobile ? 'absolute' : 'relative',
+          top: 0,
+          right: 0,
+          height: '100%',
+          zIndex: 100,
+          boxShadow: isMobile ? '-4px 0 15px rgba(0,0,0,0.5)' : 'none'
+        }}>
+          <h3 style={{ fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px', color: '#ffffff', borderBottom: '1px solid #30363d', paddingBottom: '6px', marginTop: 0 }}>
+            Block Queue ({createdBlocks.length})
+          </h3>
 
-          <button 
-            onClick={handleSaveAllBlocks}
-            style={{
-              flex: 1,
-              padding: '6px',
-              backgroundColor: '#238636',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              fontSize: '0.7rem'
-            }}
-          >
-            Save All
-          </button>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '8px' }}>
+            {createdBlocks.length === 0 ? (
+              <p style={{ fontSize: '0.7rem', opacity: 0.5, textAlign: 'center', marginTop: '20px' }}>
+                No blocks in queue.
+              </p>
+            ) : (
+              createdBlocks.map((block, index) => (
+                <div key={index} style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.03)',
+                  border: '1px solid #30363d',
+                  borderRadius: '5px',
+                  padding: '6px 8px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div>
+                    <p style={{ margin: '0 0 1px 0', fontSize: '0.75rem', fontWeight: 'bold', color: '#7ee787' }}>
+                      {block.blockName || 'custom_block'}
+                    </p>
+                    <span style={{ fontSize: '0.6rem', opacity: 0.7, backgroundColor: 'rgba(255,255,255,0.08)', padding: '1px 3px', borderRadius: '3px' }}>
+                      {block.blockType}
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => handleRemoveFromQueue(index)}
+                    style={{ background: 'none', border: 'none', color: '#da3633', cursor: 'pointer', fontWeight: 'bold', fontSize: '0.8rem' }}
+                    title="Remove"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))
+            )}
+          </div>
+
+          <div style={{ display: 'flex', gap: '6px', paddingTop: '6px', borderTop: '1px solid #30363d' }}>
+            <button 
+              onClick={handleClearQueue}
+              style={{
+                flex: 1,
+                padding: '6px',
+                backgroundColor: '#da3633',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '0.7rem'
+              }}
+            >
+              Clear
+            </button>
+
+            <button 
+              onClick={handleSaveAllBlocks}
+              style={{
+                flex: 1,
+                padding: '6px',
+                backgroundColor: '#238636',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '0.7rem'
+              }}
+            >
+              Save All
+            </button>
+          </div>
+
         </div>
 
       </div>
