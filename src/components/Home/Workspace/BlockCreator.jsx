@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import BasicBlock from './Block_options/BasicBlock';
 import RotateAbleBlock from './Block_options/RotateAbleBlock';
+import VerticalBlock1x2 from './Block_options/VerticalBlock1x2';
+import HorizontalBlock1x2 from './Block_options/HorizontalBlock1x2';
 
 const BlockCreator = ({ availableTextures = [] }) => {
   const [activeOption, setActiveOption] = useState('basic');
@@ -8,8 +10,8 @@ const BlockCreator = ({ availableTextures = [] }) => {
   const [hasUnsavedProgress, setHasUnsavedProgress] = useState(false);
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Para sa Left Sidebar sa mobile
-  const [mobileQueueOpen, setMobileQueueOpen] = useState(false); // Para sa Queue Sidebar sa mobile
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileQueueOpen, setMobileQueueOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -36,7 +38,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
 
     setActiveOption(nextOption);
     setHasUnsavedProgress(false);
-    setMobileMenuOpen(false); // Isara ang menu pagkapili sa mobile
+    setMobileMenuOpen(false);
   };
 
   const handleAddBlockToQueue = (blockData, blockType) => {
@@ -117,6 +119,13 @@ const BlockCreator = ({ availableTextures = [] }) => {
     }
   };
 
+  const getActiveBlockLabel = () => {
+    if (activeOption === 'basic') return 'Basic Block';
+    if (activeOption === 'rotatable') return 'Rotatable Block';
+    if (activeOption === 'vertical1x2') return '1x2 Vertical Block';
+    return 'Block Creator';
+  };
+
   return (
     <div className="workspace-page" style={{ 
       display: 'flex', 
@@ -131,7 +140,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
       position: 'relative'
     }}>
       
-      {/* MOBILE TOP CONTROLS BAR (Lilitaw lang kapag mobile/tablet view) */}
+      {/* MOBILE TOP CONTROLS BAR */}
       {isMobile && (
         <div style={{
           display: 'flex',
@@ -160,7 +169,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
           </button>
 
           <span style={{ color: '#c9d1d9', fontWeight: 'bold', textTransform: 'uppercase', fontSize: '0.7rem' }}>
-            {activeOption === 'basic' ? 'Basic Block' : 'Rotatable Block'}
+            {getActiveBlockLabel()}
           </span>
 
           <button
@@ -184,7 +193,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
       {/* MAIN BODY CONTAINER */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative', width: '100%' }}>
         
-        {/* LEFT SIDEBAR: BLOCK TYPES (Desktop: static sidebar, Mobile: Overlay Drawer) */}
+        {/* LEFT SIDEBAR: BLOCK TYPES */}
         <div style={{
           width: '180px',
           backgroundColor: isMobile ? '#0d1117' : 'transparent',
@@ -250,26 +259,79 @@ const BlockCreator = ({ availableTextures = [] }) => {
           >
             Rotatable Block
           </button>
+
+          <button
+            onClick={() => handleTabSwitch('vertical1x2')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'vertical1x2' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'vertical1x2' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'vertical1x2' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            1x2 Vertical Block
+          </button>
+
+          <button
+            onClick={() => handleTabSwitch('horizontal1x2')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'horizontal1x2' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'horizontal1x2' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'horizontal1x2' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            1x2 Horizontal Block
+          </button>
         </div>
 
         {/* MIDDLE CONTENT AREA */}
         <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#0d1117', width: '100%', boxSizing: 'border-box' }}>
-          {activeOption === 'basic' ? (
+          {activeOption === 'basic' && (
             <BasicBlock 
               availableTextures={availableTextures} 
               onAddBlock={(data) => handleAddBlockToQueue(data, 'Basic')}
               onFormChange={() => setHasUnsavedProgress(true)}
             />
-          ) : (
+          )}
+          {activeOption === 'rotatable' && (
             <RotateAbleBlock 
               availableTextures={availableTextures} 
               onAddBlock={(data) => handleAddBlockToQueue(data, 'Rotatable')} 
               onFormChange={() => setHasUnsavedProgress(true)}
             />
           )}
+          {activeOption === 'vertical1x2' && (
+            <VerticalBlock1x2 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, '1x2 Vertical')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
+          {activeOption === 'horizontal1x2' && (
+            <HorizontalBlock1x2 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, '1x2 Horizontal')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
         </div>
 
-        {/* RIGHT SIDEBAR: QUEUE & SAVE ALL (Desktop: static sidebar, Mobile: Overlay Drawer) */}
+        {/* RIGHT SIDEBAR: QUEUE & SAVE ALL */}
         <div style={{
           width: isMobile ? '260px' : '240px',
           backgroundColor: 'rgba(22, 27, 34, 0.95)',
