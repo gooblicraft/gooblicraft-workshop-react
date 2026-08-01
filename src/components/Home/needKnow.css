@@ -1,0 +1,67 @@
+.need_know {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columns na magkasinglaki */
+    gap: 1.25rem;
+    padding: 2rem 1rem;
+    width: 100%;
+    max-width: 1350px; /* Nilakihan natin ang max-width para magkasya ang dalawang column */
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.know_about1, .know_about2, .know_about3, .know_about4 {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+    max-width: none; /* Tinanggal ang 650px limit para sumunod siya sa grid columns */
+    border-style: solid;
+    border-color: #000000;
+    border-width: 0.25rem;
+    box-sizing: border-box;
+    overflow: hidden;
+    align-items: stretch;
+    border-radius: 4px;
+}
+
+.get_addons, .encounter_smt, .create_in_workspace, .suggest_smt {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.25rem 1.5rem;
+    background-color: #313233;
+    flex: 7;
+}
+
+.get_addons h1, .encounter_smt h1, .create_in_workspace h1, .suggest_smt h1 {
+    text-shadow: 0.1rem 0.2rem 0.05rem #000000;
+    font-family: 'Minecraft-Ten', sans-serif;
+    font-size: 1.8rem;
+    background-color: #313233;
+    margin: 0;
+    color: #ffffff;
+    letter-spacing: 0.15rem; /* Idagdag ito para lumaki ang agwat ng bawat titik */
+}
+
+.get_addons p, .encounter_smt p, .create_in_workspace p, .suggest_smt p {
+    font-size: 0.95rem;
+    margin: 0;
+    color: #d1d5db;
+}
+
+.get_addon_img img, .get_encounter_img img, .create_addon_img img, .suggest_img img {
+    background-color: transparent;
+    max-width: 100%;
+    height: auto;
+}
+
+.get_addon_img, .get_encounter_img, .create_addon_img, .suggest_img {
+    flex: 1.2;
+    background-color: #161616;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    min-width: 90px;
+}
