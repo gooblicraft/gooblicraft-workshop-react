@@ -3,6 +3,7 @@ import BasicBlock from './Block_options/BasicBlock';
 import RotateAbleBlock from './Block_options/RotateAbleBlock';
 import VerticalBlock1x2 from './Block_options/VerticalBlock1x2';
 import HorizontalBlock1x2 from './Block_options/HorizontalBlock1x2';
+import PushableBlock from './Block_options/PushableBlock';
 
 const BlockCreator = ({ availableTextures = [] }) => {
   const [activeOption, setActiveOption] = useState('basic');
@@ -261,6 +262,25 @@ const BlockCreator = ({ availableTextures = [] }) => {
           </button>
 
           <button
+            onClick={() => handleTabSwitch('pushable')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'pushable' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'pushable' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'pushable' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Pushable Block
+          </button>
+
+          <button
             onClick={() => handleTabSwitch('vertical1x2')}
             style={{
               width: '100%',
@@ -312,6 +332,13 @@ const BlockCreator = ({ availableTextures = [] }) => {
             <RotateAbleBlock 
               availableTextures={availableTextures} 
               onAddBlock={(data) => handleAddBlockToQueue(data, 'Rotatable')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
+          {activeOption === 'pushable' && (
+            <PushableBlock 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, 'Pushable')} 
               onFormChange={() => setHasUnsavedProgress(true)}
             />
           )}
