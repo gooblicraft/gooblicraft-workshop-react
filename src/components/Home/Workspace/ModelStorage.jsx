@@ -113,11 +113,15 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isDragging, setIsDragging] = useState(false);
+  
   const fileInputRef = useRef(null);
+  const singleInputRef = useRef(null);
+  const [dirHandle, setDirHandle] = useState(null);
   
   const geometries = availableGeometries ?? localAvailableGeometries;
   
-  const updateGeometries = (updater) => {
+  const updateGeometries = async (updater, newAddedGeos = []) => {
     const nextState = typeof updater === 'function' ? updater(geometries) : updater;
     
     if (setAvailableGeometries) {
@@ -129,7 +133,23 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       localStorage.setItem('goobli_available_geometries', JSON.stringify(nextState));
     } catch (err) {
       console.warn("Storage quota exceeded or heavy JSON payload.");
-      alert("Nag-ka-quota limit ang localStorage. Masyadong malaki o marami ang mga model files.");
+    }
+
+    // Direktang isinusulat sa napiling folder ang mga bagong idinagdag na models
+    if (dirHandle && newAddedGeos.length > 0) {
+      try {
+        for (const geo of newAddedGeos) {
+          const fileHandle = await dirHandle.getFileHandle(geo.name, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(JSON.stringify(geo.content, null, 2));
+          await writable.close();
+        }
+      } catch (err) {
+        console.error("Hindi maisulat nang direkta sa folder:", err);
+        alert("Hindi maisulat nang direkta sa folder. Subukang i-link ulit ang folder.");
+      }
+    } else if (!dirHandle && newAddedGeos.length > 0) {
+      alert("Paalala: Walang naka-link na direktoryo. Nakaimbak lamang ito sa browser storage. Pindutin ang 'Open Blocks Folder' para ma-save sa disk.");
     }
   };
 
@@ -143,6 +163,70 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       }
     }
   }, [availableGeometries]);
+
+  // Recursive function para pasukin ang mga subfolders sa loob ng blocks folder
+  const readDirectoryRecursive = async (handle, pathPrefix = '') => {
+    let filesList = [];
+    for await (const entry of handle.values()) {
+      const currentPath = pathPrefix ? `${pathPrefix}/${entry.name}` : entry.name;
+      if (entry.kind === 'file') {
+        const name = entry.name.toLowerCase();
+        if (name.endsWith('.json') && !name.includes('manifest') && !name.includes('pack_icon')) {
+          try {
+            const file = await entry.getFile();
+            const textContent = await file.text();
+            const content = JSON.parse(textContent);
+            filesList.push({
+              name: entry.name,
+              path: currentPath,
+              content: content
+            });
+          } catch (err) {
+            console.error(`Skipped ${currentPath}: Invalid JSON`);
+          }
+        }
+      } else if (entry.kind === 'directory') {
+        // Recursive call para sa mga subfolders
+        const subFiles = await readDirectoryRecursive(entry, currentPath);
+        filesList = filesList.concat(subFiles);
+      }
+    }
+    return filesList;
+  };
+
+  const handlePickDirectory = async () => {
+    if (!window.showDirectoryPicker) {
+      fileInputRef.current?.click();
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setLoadingProgress(20);
+      
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      setDirHandle(handle);
+
+      setLoadingProgress(50);
+      const loadedGeos = await readDirectoryRecursive(handle);
+
+      setLoadingProgress(100);
+      if (loadedGeos.length > 0) {
+        updateGeometries(prev => {
+          const existingPaths = new Set(prev.map(g => g.path));
+          const uniqueNewGeos = loadedGeos.filter(g => !existingPaths.has(g.path));
+          return [...prev, ...uniqueNewGeos];
+        });
+      }
+      setIsLoading(false);
+      alert(`Matagumpay na nai-load ang ${loadedGeos.length} model files (kasama ang mga nasa subfolders)!`);
+    } catch (err) {
+      setIsLoading(false);
+      if (err.name !== 'AbortError') {
+        console.error("Error picking directory:", err);
+      }
+    }
+  };
 
   const handleFolderUpload = async (e) => {
     const files = e.target.files;
@@ -182,29 +266,72 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
 
       processed++;
       setLoadingProgress(Math.round((processed / validFiles.length) * 100));
-
-      if (processed % 5 === 0) {
-        await new Promise(resolve => setTimeout(resolve, 5));
-      }
     }
 
-    await new Promise(resolve => setTimeout(resolve, 30));
-
     if (newGeos.length > 0) {
-      updateGeometries(prev => {
+      await updateGeometries(prev => {
         const existingPaths = new Set(prev.map(g => g.path));
         const uniqueNewGeos = newGeos.filter(g => !existingPaths.has(g.path));
         return [...prev, ...uniqueNewGeos];
-      });
+      }, newGeos);
     }
 
     setIsLoading(false);
     e.target.value = '';
   };
 
-  // Function para mag-delete ng specific model gamit ang path o index nito
-  const handleDeleteGeo = (targetPath) => {
+  const handleFilesAddition = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+
+    const validFiles = Array.from(fileList).filter(file => {
+      const name = file.name.toLowerCase();
+      return name.endsWith('.json') && !name.includes('manifest') && !name.includes('pack_icon');
+    });
+
+    if (validFiles.length === 0) {
+      alert("Mangyaring pumili o mag-drop ng mga valid geometry .json files.");
+      return;
+    }
+
+    setIsLoading(true);
+    const newGeos = [];
+
+    for (const file of validFiles) {
+      try {
+        const textContent = await file.text();
+        const content = JSON.parse(textContent);
+        newGeos.push({
+          name: file.name,
+          path: file.name,
+          content: content
+        });
+      } catch (err) {
+        console.error(`Hindi nabasa ang ${file.name}`);
+      }
+    }
+
+    if (newGeos.length > 0) {
+      await updateGeometries(prev => {
+        const existingPaths = new Set(prev.map(g => g.path));
+        const uniqueNewGeos = newGeos.filter(g => !existingPaths.has(g.path));
+        return [...prev, ...uniqueNewGeos];
+      }, newGeos);
+      alert(`Matagumpay na naidagdag at naisave ang ${newGeos.length} model file(s)!`);
+    }
+
+    setIsLoading(false);
+  };
+
+  const handleDeleteGeo = async (targetPath) => {
     updateGeometries(prev => prev.filter(geo => geo.path !== targetPath));
+    
+    if (dirHandle) {
+      try {
+        await dirHandle.removeEntry(targetPath);
+      } catch (e) {
+        console.warn("Hindi nabura sa disk folder:", e);
+      }
+    }
   };
 
   const filteredGeometries = geometries.filter(geo => 
@@ -219,7 +346,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
           <div>
             <p className="workspace-eyebrow" style={{ letterSpacing: '2px' }}>RESOURCE PACK</p>
             <h2 className="workspace-title">Model Storage Manager</h2>
-            <p className="workspace-subtitle">Piliin ang iyong `models/blocks` folder para awtomatikong i-load at i-save ang lahat ng geometry files.</p>
+            <p className="workspace-subtitle">I-link ang iyong `blocks` folder para basahin ang lahat ng models pati ang mga nasa loob ng subfolders.</p>
           </div>
         </div>
 
@@ -237,26 +364,52 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
               onChange={handleFolderUpload}
             />
 
+            <input
+              ref={singleInputRef}
+              type="file"
+              accept=".json"
+              multiple
+              style={{ display: 'none' }}
+              onChange={(e) => handleFilesAddition(e.target.files)}
+            />
+
             <div
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragging(false);
+                handleFilesAddition(e.dataTransfer.files);
+              }}
               style={{
-                border: '2px dashed #444c56',
+                border: isDragging ? '2px dashed #7ee787' : '2px dashed #444c56',
                 borderRadius: '16px',
                 padding: '40px 20px',
                 textAlign: 'center',
-                backgroundColor: 'transparent',
-                marginBottom: '30px'
+                backgroundColor: isDragging ? 'rgba(126, 231, 135, 0.05)' : 'transparent',
+                marginBottom: '30px',
+                transition: 'all 0.2s ease'
               }}
             >
               <div>
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>Link Models Folder</h3>
-                <p style={{ opacity: 0.7, marginBottom: '20px' }}>I-click ang button sa ibaba para piliin ang iyong `models` o `models/blocks` folder.</p>
-                <button
-                  className="workspace-button workspace-button--secondary"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                >
-                  {isLoading ? `Binabasa ang mga models... (${loadingProgress}%)` : 'Open Models Folder'}
-                </button>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>Link Blocks Folder o Mag-drop ng Models</h3>
+                <p style={{ opacity: 0.7, marginBottom: '20px' }}>Pumili ng iyong `blocks` folder o i-drag and drop dito ang mga bagong geometry `.json` files.</p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    className="workspace-button workspace-button--secondary"
+                    onClick={handlePickDirectory}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? `Binabasa... (${loadingProgress}%)` : 'Open Blocks Folder'}
+                  </button>
+                  <button
+                    className="workspace-button workspace-button--primary"
+                    onClick={() => singleInputRef.current?.click()}
+                    disabled={isLoading}
+                  >
+                    + Add Model Files
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -298,7 +451,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                 )}
               </div>
 
-              {isLoading ? (
+              {isLoading && geometries.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 0' }}>
                   <p style={{ opacity: 0.8, color: '#7fb0ff', marginBottom: '10px' }}>Pinoproseso ang mga JSON files... {loadingProgress}%</p>
                   <div style={{ width: '50%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', margin: '0 auto', overflow: 'hidden' }}>
@@ -306,7 +459,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                   </div>
                 </div>
               ) : geometries.length === 0 ? (
-                <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Wala pang nakakabit na model folder o mga JSON files.</p>
+                <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Wala pang nakakabit na blocks folder o mga JSON files.</p>
               ) : filteredGeometries.length === 0 ? (
                 <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Walang nahanap na model na tumutugma sa "{searchQuery}".</p>
               ) : (
@@ -328,7 +481,6 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                           boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                         }}
                       >
-                        {/* Header ng Card: Green filename, GEO badge, at Delete 'X' button */}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                           <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#7ee787', wordBreak: 'break-all', lineHeight: '1.2' }}>
                             {geo.name}
@@ -362,7 +514,13 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                           </div>
                         </div>
 
-                        {/* MISMONG VISUAL MODEL PREVIEW */}
+                        {/* Path indicator kung nasa loob ng subfolder */}
+                        {geo.path.includes('/') && (
+                          <span style={{ fontSize: '0.65rem', opacity: 0.6, color: '#c9d1d9', wordBreak: 'break-all', marginTop: '-6px' }}>
+                            📁 {geo.path}
+                          </span>
+                        )}
+
                         <div style={{ 
                           width: '100%', 
                           height: '130px', 
@@ -390,4 +548,5 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
   );
 };
 
+ModelStorage;
 export default ModelStorage;
