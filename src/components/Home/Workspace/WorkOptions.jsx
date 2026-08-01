@@ -4,6 +4,9 @@ import BlockCreator from './BlockCreator';
 import ModelStorage from './ModelStorage';
 import StoreBlockTexture from './StoreBlockTexture';
 import packGeneratorIcon from '../../../assets/pack_generator.svg';
+import blockGeneratorIcon from '../../../assets/block_generator.svg';
+import textureStorageIcon from '../../../assets/texture_storage.svg';
+import modelStorageIcon from '../../../assets/model_storage.svg';
 import './WorkOptions.css';
 
 const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
@@ -18,7 +21,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         buttonLabel: 'Open pack generator',
         imageLabel: 'Pack generator preview',
         imageStyle: 'work-option-card__image--pack',
-        icon: packGeneratorIcon, // Idinagdag ang icon reference dito
+        icon: packGeneratorIcon,
       },
       {
         id: 'block',
@@ -27,7 +30,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         buttonLabel: 'Open block creator',
         imageLabel: 'Block creator preview',
         imageStyle: 'work-option-card__image--block',
-        icon: packGeneratorIcon, // Pwede mong palitan ng sarili nitong icon sakaling mayroon na
+        icon: blockGeneratorIcon,
       },
       {
         id: 'texture',
@@ -36,7 +39,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         buttonLabel: 'Open texture creator',
         imageLabel: 'texture creator preview',
         imageStyle: 'work-option-card__image--texture',
-        icon: packGeneratorIcon, // Pwede mong palitan
+        icon: textureStorageIcon,
       },
       {
         id: 'model',
@@ -45,7 +48,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         buttonLabel: 'Open model storage',
         imageLabel: 'Model storage preview',
         imageStyle: 'work-option-card__image--model',
-        icon: packGeneratorIcon, // Pwede mong palitan
+        icon: modelStorageIcon,
       },
     ],
     []
@@ -114,15 +117,11 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
           return (
             <article key={option.id} className={`work-option-card${isActive ? ' work-option-card--active' : ''}`}>
               <div className={`work-option-card__image ${option.imageStyle}`} aria-hidden="true">
-                <span className="work-option-card__image-mark" />
-                {/* Laman na SVG Icon sa loob ng dating empty box */}
-                <div className="work-option-card__icon-container">
-                  <img 
-                    src={option.icon} 
-                    alt={option.title} 
-                    className="work-option-card__icon" 
-                  />
-                </div>
+                <img
+                  src={option.icon}
+                  alt={option.title}
+                  className="work-option-card__fill-icon"
+                />
               </div>
               <div className="work-option-card__body">
                 <h2 className="work-option-card__title">{option.title}</h2>
