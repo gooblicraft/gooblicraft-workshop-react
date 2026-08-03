@@ -4,6 +4,7 @@ import RotateAbleBlock from './Block_options/RotateAbleBlock';
 import VerticalBlock1x2 from './Block_options/VerticalBlock1x2';
 import HorizontalBlock1x2 from './Block_options/HorizontalBlock1x2';
 import PushableBlock from './Block_options/PushableBlock';
+import VerticalBlock2x2 from './Block_options/VerticalBlock2x2';
 
 const BlockCreator = ({ availableTextures = [] }) => {
   const [activeOption, setActiveOption] = useState('basic');
@@ -123,7 +124,10 @@ const BlockCreator = ({ availableTextures = [] }) => {
   const getActiveBlockLabel = () => {
     if (activeOption === 'basic') return 'Basic Block';
     if (activeOption === 'rotatable') return 'Rotatable Block';
+    if (activeOption === 'pushable') return 'Pushable Block';
     if (activeOption === 'vertical1x2') return '1x2 Vertical Block';
+    if (activeOption === 'vertical2x2') return '2x2 Vertical Block';
+    if (activeOption === 'horizontal1x2') return '1x2 Horizontal Block';
     return 'Block Creator';
   };
 
@@ -300,6 +304,25 @@ const BlockCreator = ({ availableTextures = [] }) => {
           </button>
 
           <button
+            onClick={() => handleTabSwitch('vertical2x2')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'vertical2x2' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'vertical2x2' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'vertical2x2' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            2x2 Vertical Block
+          </button>
+
+          <button
             onClick={() => handleTabSwitch('horizontal1x2')}
             style={{
               width: '100%',
@@ -346,6 +369,13 @@ const BlockCreator = ({ availableTextures = [] }) => {
             <VerticalBlock1x2 
               availableTextures={availableTextures} 
               onAddBlock={(data) => handleAddBlockToQueue(data, '1x2 Vertical')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
+          {activeOption === 'vertical2x2' && (
+            <VerticalBlock2x2 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, '2x2 Vertical')} 
               onFormChange={() => setHasUnsavedProgress(true)}
             />
           )}
