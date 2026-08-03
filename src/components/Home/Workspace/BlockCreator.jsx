@@ -6,6 +6,8 @@ import HorizontalBlock1x2 from './Block_options/HorizontalBlock1x2';
 import PushableBlock from './Block_options/PushableBlock';
 import VerticalBlock2x2 from './Block_options/VerticalBlock2x2';
 import HorizontalBlock2x2 from './Block_options/HorizontalBlock2x2';
+import HorizontableBlock from './Block_options/HorizontableBlock';
+import SlabBlock from './Block_options/SlabBlock';
 
 const BlockCreator = ({ availableTextures = [] }) => {
   const [activeOption, setActiveOption] = useState('basic');
@@ -130,6 +132,8 @@ const BlockCreator = ({ availableTextures = [] }) => {
     if (activeOption === 'vertical2x2') return '2x2 Vertical Block';
     if (activeOption === 'horizontal1x2') return '1x2 Horizontal Block';
     if (activeOption === 'horizontal2x2') return '2x2 Horizontal Block';
+    if (activeOption === 'slab') return 'Slab Block';
+    if (activeOption === 'horizontable') return 'Horizontable Block';
     return 'Block Creator';
   };
 
@@ -249,6 +253,25 @@ const BlockCreator = ({ availableTextures = [] }) => {
           </button>
 
           <button
+            onClick={() => handleTabSwitch('slab')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'slab' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'slab' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'slab' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Slab Block
+          </button>
+
+          <button
             onClick={() => handleTabSwitch('rotatable')}
             style={{
               width: '100%',
@@ -325,6 +348,24 @@ const BlockCreator = ({ availableTextures = [] }) => {
           </button>
 
           <button
+            onClick={() => handleTabSwitch('horizontable')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'horizontable' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'horizontable' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'horizontable' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            Horizontable Block
+          </button>
+          <button
             onClick={() => handleTabSwitch('horizontal1x2')}
             style={{
               width: '100%',
@@ -372,6 +413,13 @@ const BlockCreator = ({ availableTextures = [] }) => {
               onFormChange={() => setHasUnsavedProgress(true)}
             />
           )}
+          {activeOption === 'slab' && (
+            <SlabBlock 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, 'Slab')}
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
           {activeOption === 'rotatable' && (
             <RotateAbleBlock 
               availableTextures={availableTextures} 
@@ -397,6 +445,13 @@ const BlockCreator = ({ availableTextures = [] }) => {
             <VerticalBlock2x2 
               availableTextures={availableTextures} 
               onAddBlock={(data) => handleAddBlockToQueue(data, '2x2 Vertical')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
+          {activeOption === 'horizontable' && (
+            <HorizontableBlock
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, 'Horizontable')} 
               onFormChange={() => setHasUnsavedProgress(true)}
             />
           )}

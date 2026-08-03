@@ -1,0 +1,178 @@
+{
+    "format_version": "1.21.70",
+    "minecraft:block": {
+        "description": {
+            "identifier": "[blockId]:[blockName]",
+            "menu_category": {
+                "category": "items"
+            },
+            "traits": {
+                "minecraft:placement_direction": {
+                    "enabled_states": [
+                        "minecraft:cardinal_direction"
+                    ]
+                }
+            },
+            "states": {
+                "gd:north_neighbor": [
+                    0,
+                    1
+                ],
+                "gd:east_neighbor": [
+                    0,
+                    1
+                ],
+                "gd:south_neighbor": [
+                    0,
+                    1
+                ],
+                "gd:west_neighbor": [
+                    0,
+                    1
+                ]
+            }
+        },
+        "permutations": [
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            180,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            0,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            90,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
+                "components": {
+                    "minecraft:transformation": {
+                        "rotation": [
+                            0,
+                            -90,
+                            0
+                        ]
+                    }
+                }
+            },
+            {
+                "condition": "(query.block_state('minecraft:cardinal_direction') == 'north' && query.block_state('gd:east_neighbor') && !query.block_state('gd:west_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'south' && query.block_state('gd:west_neighbor') && !query.block_state('gd:east_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'west' && query.block_state('gd:north_neighbor') && !query.block_state('gd:south_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'east' && query.block_state('gd:south_neighbor') && !query.block_state('gd:north_neighbor'))",
+                "components": {
+                    "minecraft:geometry": {
+                        "identifier": "geometry.[blockGeometry]",
+                        "bone_visibility": {
+                            "single": false,
+                            "left": true,
+                            "mid": false,
+                            "right": false
+                            
+                        }
+                    }
+                }
+            },
+            {
+                "condition": "(query.block_state('minecraft:cardinal_direction') == 'north' || query.block_state('minecraft:cardinal_direction') == 'south') && (query.block_state('gd:east_neighbor') && query.block_state('gd:west_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'west' || query.block_state('minecraft:cardinal_direction') == 'east') && (query.block_state('gd:north_neighbor') && query.block_state('gd:south_neighbor'))",
+                "components": {
+                    "minecraft:geometry": {
+                        "identifier": "geometry.[blockGeometry]",
+                        "bone_visibility": {
+                            "single": false,
+                            "left": false,
+                            "mid": true,
+                            "right": false
+                        }
+                    }
+                }
+            },
+            {
+                "condition": "(query.block_state('minecraft:cardinal_direction') == 'north' && query.block_state('gd:west_neighbor') && !query.block_state('gd:east_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'south' && query.block_state('gd:east_neighbor') && !query.block_state('gd:west_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'west' && query.block_state('gd:south_neighbor') && !query.block_state('gd:north_neighbor')) || (query.block_state('minecraft:cardinal_direction') == 'east' && query.block_state('gd:north_neighbor') && !query.block_state('gd:south_neighbor'))",
+                "components": {
+                    "minecraft:geometry": {
+                        "identifier": "geometry.[blockGeometry]",
+                        "bone_visibility": {
+                            "single": false,
+                            "left": false,
+                            "mid": false,
+                            "right": true
+                        }
+                    }
+                }
+            }
+        ],
+        "components": {
+            "tag:[blockId]_[blockName]": {},
+            "minecraft:display_name": "[blockDisplayName]",
+            "minecraft:geometry": {
+                "identifier": "geometry.[blockGeometry]",
+                "bone_visibility": {
+                    "single": true,
+                    "left": false,
+                    "mid": false,
+                    "right": false
+                }
+            },
+            "minecraft:material_instances": {
+                "*": {
+                    "texture": "[blockTexture]",
+                    "render_method": "[blockRender]"
+                }
+            },
+            "minecraft:collision_box": {
+                "origin": [
+                    -8,
+                    0,
+                    -8
+                ],
+                "size": [
+                    16,
+                    16,
+                    16
+                ]
+            },
+            "minecraft:selection_box": {
+                "origin": [
+                    -8,
+                    0,
+                    -8
+                ],
+                "size": [
+                    16,
+                    16,
+                    16
+                ]
+            },
+            "minecraft:light_dampening": 0,
+            "minecraft:light_emission": 0,
+            "minecraft:custom_components": [
+                "gd:horizontal_full_connected",
+                "gd:horizontal_full_destroy"
+            ]
+        }
+    }
+}
