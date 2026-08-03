@@ -74,7 +74,7 @@ const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview
   );
 };
 
-const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) => {
+const HorizontalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) => {
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -138,9 +138,9 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
 
   const generateBlockJson = () => {
     const id = blockData.blockId || 'goobli';
-    const name = blockData.blockName || 'vertical_block_2x2';
-    const displayName = blockData.blockDisplayName || 'Vertical 2x2 Block';
-    const geo = blockData.blockGeometry || 'vertical_block_2x2';
+    const name = blockData.blockName || 'horizontal_block_2x2';
+    const displayName = blockData.blockDisplayName || 'Horizontal 2x2 Block';
+    const geo = blockData.blockGeometry || 'horizontal_block_2x2';
     const tex = blockData.blockTexture || 'default_texture';
 
     const defaultSelectionBox = '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}';
@@ -177,10 +177,10 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
           },
           "states": {
             "goobli:block_states": [
-              "bot_left",
-              "bot_right",
-              "top_left",
-              "top_right"
+              "front_left",
+              "front_right",
+              "back_left",
+              "back_right"
             ]
           }
         },
@@ -188,33 +188,25 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
           {
             "condition": "q.block_state('minecraft:cardinal_direction') == 'north'",
             "components": {
-              "minecraft:transformation": {
-                "rotation": [0, 180, 0]
-              }
+              "minecraft:transformation": { "rotation": [0, 180, 0] }
             }
           },
           {
             "condition": "q.block_state('minecraft:cardinal_direction') == 'south'",
             "components": {
-              "minecraft:transformation": {
-                "rotation": [0, 0, 0]
-              }
+              "minecraft:transformation": { "rotation": [0, 0, 0] }
             }
           },
           {
             "condition": "q.block_state('minecraft:cardinal_direction') == 'east'",
             "components": {
-              "minecraft:transformation": {
-                "rotation": [0, 90, 0]
-              }
+              "minecraft:transformation": { "rotation": [0, 90, 0] }
             }
           },
           {
             "condition": "q.block_state('minecraft:cardinal_direction') == 'west'",
             "components": {
-              "minecraft:transformation": {
-                "rotation": [0, -90, 0]
-              }
+              "minecraft:transformation": { "rotation": [0, -90, 0] }
             }
           }
         ],
@@ -223,10 +215,10 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
           "minecraft:geometry": {
             "identifier": `geometry.${geo}`,
             "bone_visibility": {
-              "bot_left": "q.block_state('goobli:block_states') == 'bot_left'",
-              "bot_right": "q.block_state('goobli:block_states') == 'bot_right'",
-              "top_left": "q.block_state('goobli:block_states') == 'top_left'",
-              "top_right": "q.block_state('goobli:block_states') == 'top_right'"
+              "front_left": "q.block_state('goobli:block_states') == 'front_left'",
+              "front_right": "q.block_state('goobli:block_states') == 'front_right'",
+              "back_left": "q.block_state('goobli:block_states') == 'back_left'",
+              "back_right": "q.block_state('goobli:block_states') == 'back_right'"
             }
           },
           "minecraft:material_instances": materialInstancesObj,
@@ -239,7 +231,7 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
           "minecraft:light_dampening": 0,
           "minecraft:light_emission": 0,
           "minecraft:custom_components": [
-            "goobli:place2x2_v"
+            "goobli:place2x2_h"
           ]
         }
       }
@@ -264,7 +256,7 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(getFormattedJsonString());
-    alert("Vertical 2x2 Block JSON copied to clipboard!");
+    alert("Horizontal 2x2 Block JSON copied to clipboard!");
   };
 
   const handleAddToQueue = () => {
@@ -303,7 +295,7 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
         <div className="workspace-hero" style={{ textAlign: 'center', paddingBottom: '5px', paddingTop: '0px' }}>
           <div>
             <p className="workspace-eyebrow" style={{ letterSpacing: '2px' }}>WORKSPACE</p>
-            <h2 className="workspace-title">Vertical 2x2 Block Generator</h2>
+            <h2 className="workspace-title">Horizontal 2x2 Block Generator</h2>
           </div>
         </div>
 
@@ -317,7 +309,7 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Block Identifier:</span>
-                  <input 
+                <input 
                     type='text' 
                     className="workspace-input" 
                     style={{ width: '100%' }} 
@@ -327,12 +319,12 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
                         handleUpdate('blockId', formattedValue);
                     }} 
                     placeholder="my_addon" 
-                  />                
-                  </label>
+                />                
+                </label>
 
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Identifier Name:</span>
-                  <input 
+                <input 
                     type='text' 
                     className="workspace-input" 
                     style={{ width: '100%' }} 
@@ -341,13 +333,13 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
                         const formattedValue = e.target.value.replace(/\s+/g, '_'); 
                         handleUpdate('blockName', formattedValue);
                     }} 
-                    placeholder="vertical_block_2x2" 
-                />                
+                    placeholder="horizontal_block_2x2" 
+                />
                 </label>
 
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Display Name:</span>
-                  <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockDisplayName} onChange={(e) => handleUpdate('blockDisplayName', e.target.value)} placeholder="Vertical 2x2 Block" />
+                  <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockDisplayName} onChange={(e) => handleUpdate('blockDisplayName', e.target.value)} placeholder="Horizontal 2x2 Block" />
                 </label>
               </div>
 
@@ -606,4 +598,4 @@ const VerticalBlock2x2 = ({ availableTextures = [], onAddBlock, onFormChange }) 
   );
 };
 
-export default VerticalBlock2x2;
+export default HorizontalBlock2x2;

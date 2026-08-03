@@ -5,6 +5,7 @@ import VerticalBlock1x2 from './Block_options/VerticalBlock1x2';
 import HorizontalBlock1x2 from './Block_options/HorizontalBlock1x2';
 import PushableBlock from './Block_options/PushableBlock';
 import VerticalBlock2x2 from './Block_options/VerticalBlock2x2';
+import HorizontalBlock2x2 from './Block_options/HorizontalBlock2x2';
 
 const BlockCreator = ({ availableTextures = [] }) => {
   const [activeOption, setActiveOption] = useState('basic');
@@ -128,6 +129,7 @@ const BlockCreator = ({ availableTextures = [] }) => {
     if (activeOption === 'vertical1x2') return '1x2 Vertical Block';
     if (activeOption === 'vertical2x2') return '2x2 Vertical Block';
     if (activeOption === 'horizontal1x2') return '1x2 Horizontal Block';
+    if (activeOption === 'horizontal2x2') return '2x2 Horizontal Block';
     return 'Block Creator';
   };
 
@@ -340,6 +342,25 @@ const BlockCreator = ({ availableTextures = [] }) => {
           >
             1x2 Horizontal Block
           </button>
+
+          <button
+            onClick={() => handleTabSwitch('horizontal2x2')}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              textAlign: 'left',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              border: activeOption === 'horizontal2x2' ? '1px solid #7ee787' : '1px solid #444c56',
+              backgroundColor: activeOption === 'horizontal2x2' ? 'rgba(126, 231, 135, 0.08)' : 'rgba(255, 255, 255, 0.05)',
+              color: activeOption === 'horizontal2x2' ? '#7ee787' : '#c9d1d9',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            2x2 Horizontal Block
+          </button>
         </div>
 
         {/* MIDDLE CONTENT AREA */}
@@ -383,6 +404,13 @@ const BlockCreator = ({ availableTextures = [] }) => {
             <HorizontalBlock1x2 
               availableTextures={availableTextures} 
               onAddBlock={(data) => handleAddBlockToQueue(data, '1x2 Horizontal')} 
+              onFormChange={() => setHasUnsavedProgress(true)}
+            />
+          )}
+          {activeOption === 'horizontal2x2' && (
+            <HorizontalBlock2x2 
+              availableTextures={availableTextures} 
+              onAddBlock={(data) => handleAddBlockToQueue(data, '2x2 Horizontal')} 
               onFormChange={() => setHasUnsavedProgress(true)}
             />
           )}

@@ -344,12 +344,32 @@ const RotateAbleBlock = ({ availableTextures = [], onAddBlock, onFormChange }) =
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '24px' }}>
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Block Identifier:</span>
-                  <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockId} onChange={(e) => handleUpdate('blockId', e.target.value)} placeholder="my_addon" />
-                </label>
+                  <input 
+                    type='text' 
+                    className="workspace-input" 
+                    style={{ width: '100%' }} 
+                    value={blockData.blockId} 
+                    onChange={(e) => {
+                        const formattedValue = e.target.value.replace(/\s+/g, '_'); 
+                        handleUpdate('blockId', formattedValue);
+                    }} 
+                    placeholder="my_addon" 
+                  />                
+                  </label>
 
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Identifier Name:</span>
-                  <input type='text' className="workspace-input" style={{ width: '100%' }} value={blockData.blockName} onChange={(e) => handleUpdate('blockName', e.target.value)} placeholder="custom_block" />
+                  <input 
+                    type='text' 
+                    className="workspace-input" 
+                    style={{ width: '100%' }} 
+                    value={blockData.blockName} 
+                    onChange={(e) => {
+                        const formattedValue = e.target.value.replace(/\s+/g, '_'); 
+                        handleUpdate('blockName', formattedValue);
+                    }} 
+                    placeholder="rotate_able_block" 
+                  />                
                 </label>
 
                 <label className="workspace-label" style={labelStyle}>
