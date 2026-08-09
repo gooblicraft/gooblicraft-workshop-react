@@ -135,7 +135,6 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       console.warn("Storage quota exceeded or heavy JSON payload.");
     }
 
-    // Direktang isinusulat sa napiling folder ang mga bagong idinagdag na models
     if (dirHandle && newAddedGeos.length > 0) {
       try {
         for (const geo of newAddedGeos) {
@@ -146,10 +145,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
         }
       } catch (err) {
         console.error("Hindi maisulat nang direkta sa folder:", err);
-        alert("Hindi maisulat nang direkta sa folder. Subukang i-link ulit ang folder.");
       }
-    } else if (!dirHandle && newAddedGeos.length > 0) {
-      alert("Paalala: Walang naka-link na direktoryo. Nakaimbak lamang ito sa browser storage. Pindutin ang 'Open Blocks Folder' para ma-save sa disk.");
     }
   };
 
@@ -164,7 +160,6 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
     }
   }, [availableGeometries]);
 
-  // Recursive function para pasukin ang mga subfolders sa loob ng blocks folder
   const readDirectoryRecursive = async (handle, pathPrefix = '') => {
     let filesList = [];
     for await (const entry of handle.values()) {
@@ -176,17 +171,19 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
             const file = await entry.getFile();
             const textContent = await file.text();
             const content = JSON.parse(textContent);
-            filesList.push({
-              name: entry.name,
-              path: currentPath,
-              content: content
-            });
+            
+            if (content?.["minecraft:geometry"] || content?.format_version || Array.isArray(content)) {
+              filesList.push({
+                name: entry.name,
+                path: currentPath,
+                content: content
+              });
+            }
           } catch (err) {
             console.error(`Skipped ${currentPath}: Invalid JSON`);
           }
         }
       } else if (entry.kind === 'directory') {
-        // Recursive call para sa mga subfolders
         const subFiles = await readDirectoryRecursive(entry, currentPath);
         filesList = filesList.concat(subFiles);
       }
@@ -205,21 +202,27 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       setLoadingProgress(20);
       
       const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      
+      if (handle.name.toLowerCase().includes('behavior') || handle.name.toLowerCase().includes('BP')) {
+        const proceed = window.confirm("Napili mo ay parang Behavior Pack folder. Ang Model Storage ay para sa Resource Pack -> models folder. Gusto mo pa rin bang ituloy?");
+        if (!proceed) {
+          setIsLoading(false);
+          return;
+        }
+      }
+
       setDirHandle(handle);
 
       setLoadingProgress(50);
       const loadedGeos = await readDirectoryRecursive(handle);
 
       setLoadingProgress(100);
-      if (loadedGeos.length > 0) {
-        updateGeometries(prev => {
-          const existingPaths = new Set(prev.map(g => g.path));
-          const uniqueNewGeos = loadedGeos.filter(g => !existingPaths.has(g.path));
-          return [...prev, ...uniqueNewGeos];
-        });
-      }
+      
+      // Dito natin ginawang direktang i-replace ang buong listahan ng bagong bukas na folder
+      await updateGeometries(loadedGeos);
+
       setIsLoading(false);
-      alert(`Matagumpay na nai-load ang ${loadedGeos.length} model files (kasama ang mga nasa subfolders)!`);
+      alert(`Matagumpay na nai-load ang ${loadedGeos.length} geometry model files mula sa bagong folder!`);
     } catch (err) {
       setIsLoading(false);
       if (err.name !== 'AbortError') {
@@ -237,11 +240,15 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
 
     const validFiles = Array.from(files).filter(file => {
       const name = file.name.toLowerCase();
+      const relativePath = file.webkitRelativePath || '';
+      if (relativePath.includes('behavior') || relativePath.includes('BP')) {
+        return false;
+      }
       return name.endsWith('.json') && !name.includes('manifest') && !name.includes('pack_icon');
     });
 
     if (validFiles.length === 0) {
-      alert("Walang nakitang JSON files sa napiling folder.");
+      alert("Walang nakitang valid geometry JSON files o baka napili mo ang behavior folder.");
       setIsLoading(false);
       e.target.value = '';
       return;
@@ -268,12 +275,9 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       setLoadingProgress(Math.round((processed / validFiles.length) * 100));
     }
 
+    // Dito rin pinapalitan ng bago kapag nag-upload ng bagong folder
     if (newGeos.length > 0) {
-      await updateGeometries(prev => {
-        const existingPaths = new Set(prev.map(g => g.path));
-        const uniqueNewGeos = newGeos.filter(g => !existingPaths.has(g.path));
-        return [...prev, ...uniqueNewGeos];
-      }, newGeos);
+      await updateGeometries(newGeos, newGeos);
     }
 
     setIsLoading(false);
@@ -310,6 +314,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
       }
     }
 
+    // Para naman sa manual add files, pwede silang mag-merge sa kasalukuyang listahan
     if (newGeos.length > 0) {
       await updateGeometries(prev => {
         const existingPaths = new Set(prev.map(g => g.path));
@@ -346,7 +351,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
           <div>
             <p className="workspace-eyebrow" style={{ letterSpacing: '2px' }}>RESOURCE PACK</p>
             <h2 className="workspace-title">Model Storage Manager</h2>
-            <p className="workspace-subtitle">I-link ang iyong `blocks` folder para basahin ang lahat ng models pati ang mga nasa loob ng subfolders.</p>
+            <p className="workspace-subtitle">I-link ang iyong <b>Resource Pack &gt; models</b> folder para basahin ang mga geometry files.</p>
           </div>
         </div>
 
@@ -392,15 +397,15 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
               }}
             >
               <div>
-                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>Link Blocks Folder o Mag-drop ng Models</h3>
-                <p style={{ opacity: 0.7, marginBottom: '20px' }}>Pumili ng iyong `blocks` folder o i-drag and drop dito ang mga bagong geometry `.json` files.</p>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.2rem', textTransform: 'uppercase' }}>Link Resource Models Folder o Mag-drop ng Models</h3>
+                <p style={{ opacity: 0.7, marginBottom: '20px' }}>Pumili ng tamang `models` folder sa loob ng iyong Resource Pack.</p>
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button
                     className="workspace-button workspace-button--secondary"
                     onClick={handlePickDirectory}
                     disabled={isLoading}
                   >
-                    {isLoading ? `Binabasa... (${loadingProgress}%)` : 'Open Blocks Folder'}
+                    {isLoading ? `Binabasa... (${loadingProgress}%)` : 'Open Models Folder'}
                   </button>
                   <button
                     className="workspace-button workspace-button--primary"
@@ -459,7 +464,7 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                   </div>
                 </div>
               ) : geometries.length === 0 ? (
-                <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Wala pang nakakabit na blocks folder o mga JSON files.</p>
+                <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Wala pang nakakabit na models folder o mga JSON files.</p>
               ) : filteredGeometries.length === 0 ? (
                 <p style={{ opacity: 0.7, textAlign: 'center', padding: '40px 0' }}>Walang nahanap na model na tumutugma sa "{searchQuery}".</p>
               ) : (
@@ -514,7 +519,6 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
                           </div>
                         </div>
 
-                        {/* Path indicator kung nasa loob ng subfolder */}
                         {geo.path.includes('/') && (
                           <span style={{ fontSize: '0.65rem', opacity: 0.6, color: '#c9d1d9', wordBreak: 'break-all', marginTop: '-6px' }}>
                             📁 {geo.path}
@@ -548,5 +552,4 @@ const ModelStorage = ({ availableGeometries, setAvailableGeometries }) => {
   );
 };
 
-ModelStorage;
 export default ModelStorage;
