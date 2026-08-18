@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { useModels } from '../../../hooks/ModelContext'; // Ayusin ang path kung saan mo nilagay ang ModelContext
 
 // Helper component para sa SVG preview
 const MiniModelPreview = ({ content }) => {
@@ -78,33 +79,27 @@ const MiniModelPreview = ({ content }) => {
 };
 
 const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
+  const { geometries, setGeometries, dirHandle, setDirHandle } = useModels();
   const [modalSearchQuery, setModalSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [dirHandle, setDirHandle] = useState(null);
 
   const folderInputRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  // Load mula sa localStorage
-  const [savedGeometries, setSavedGeometries] = useState(() => {
-    const saved = localStorage.getItem('goobli_available_geometries');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) { return []; }
-    }
-    return [];
-  });
+  // Keyboard Escape listener para mag-close ang modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
 
   // Centralized update function na nagse-save din sa disk kung may active dirHandle
   const updateGeometries = async (updater, newAddedGeos = []) => {
-    const nextState = typeof updater === 'function' ? updater(savedGeometries) : updater;
-    
-    setSavedGeometries(nextState);
-    try {
-      localStorage.setItem('goobli_available_geometries', JSON.stringify(nextState));
-    } catch (err) {
-      console.warn("Storage quota exceeded.");
-    }
+    const nextState = typeof updater === 'function' ? updater(geometries) : updater;
+    setGeometries(nextState);
 
     if (dirHandle && newAddedGeos.length > 0) {
       try {
@@ -170,7 +165,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
       const loadedGeos = await readDirectoryRecursive(handle);
       setLoadingProgress(100);
       
-      await updateGeometries(loadedGeos);
+      setGeometries(loadedGeos);
       setIsLoading(false);
       alert(`Matagumpay na nai-load ang ${loadedGeos.length} geometry files mula sa folder!`);
     } catch (err) {
@@ -183,6 +178,10 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
 
   // Pag-add ng manual files o folder upload
   const handleFilesAddition = async (fileList) => {
+    if (!dirHandle) {
+      alert("Mangyaring i-click muna ang 'Open Models Folder' bago magdagdag ng files.");
+      return;
+    }
     if (!fileList || fileList.length === 0) return;
 
     const validFiles = Array.from(fileList).filter(file => {
@@ -227,7 +226,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
 
   // Pagbura ng Model
   const handleDeleteGeo = async (targetPath, e) => {
-    e.stopPropagation(); // Para hindi mag-trigger yung pag-select ng model
+    e.stopPropagation();
     await updateGeometries(prev => prev.filter(geo => geo.path !== targetPath));
     
     if (dirHandle) {
@@ -240,7 +239,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
   };
 
   const searchNeedle = modalSearchQuery.toLowerCase();
-  const filteredModels = savedGeometries.filter((geo) => {
+  const filteredModels = geometries.filter((geo) => {
     const name = (geo?.name || '').toLowerCase();
     const path = (geo?.path || '').toLowerCase();
     return name.includes(searchNeedle) || path.includes(searchNeedle);
@@ -305,15 +304,6 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
             {/* FOLDER PICKER & FILE UPLOAD BUTTONS */}
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
               <input 
-                ref={folderInputRef}
-                type="file"
-                webkitdirectory="true"
-                directory="true"
-                multiple
-                style={{ display: 'none' }}
-                onChange={(e) => handleFilesAddition(e.target.files)}
-              />
-              <input 
                 ref={fileInputRef}
                 type="file"
                 accept=".json"
@@ -341,15 +331,15 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
 
               <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isLoading}
+                disabled={isLoading || !dirHandle}
                 style={{
                   padding: '9px 14px',
                   fontSize: '0.75rem',
-                  backgroundColor: 'rgba(126, 231, 135, 0.15)',
-                  border: '1px solid #7ee787',
+                  backgroundColor: dirHandle ? 'rgba(126, 231, 135, 0.15)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${dirHandle ? '#7ee787' : '#444'}`,
                   borderRadius: '8px',
-                  color: '#7ee787',
-                  cursor: 'pointer',
+                  color: dirHandle ? '#7ee787' : '#666',
+                  cursor: dirHandle ? 'pointer' : 'not-allowed',
                   fontWeight: 'bold'
                 }}
               >
@@ -362,13 +352,17 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
 
         {/* BODY / LIST OF MODELS */}
         <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
-          {isLoading && savedGeometries.length === 0 ? (
+          {!dirHandle ? (
+            <p style={{ textAlign: 'center', opacity: '0.7', padding: '40px 0' }}>
+              Mag-link muna ng <b>resource_pack/models</b> folder bago makapili ng models.
+            </p>
+          ) : isLoading && geometries.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 0' }}>
               <p style={{ opacity: 0.8, color: '#7fb0ff' }}>Binabasa ang mga model files... {loadingProgress}%</p>
             </div>
-          ) : savedGeometries.length === 0 ? (
+          ) : geometries.length === 0 ? (
             <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0' }}>
-              Wala pang nakitang models. I-click ang <b>Open Models Folder</b> o <b>+ Add Model Files</b> sa itaas para magdagdag!
+              Wala pang nakitang models sa napiling folder.
             </p>
           ) : filteredModels.length === 0 ? (
             <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0', color: '#cf222e' }}>
@@ -472,7 +466,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
               fontWeight: 'bold'
             }}
           >
-            Close
+            Close (Esc)
           </button>
         </div>
 

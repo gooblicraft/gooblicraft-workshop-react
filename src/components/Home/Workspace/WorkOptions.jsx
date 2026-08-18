@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import PackGenerator from './PackGenerator';
 import BlockCreator from './BlockCreator';
-import StoreBlockTexture from './StoreBlockTexture';
 import packGeneratorIcon from '../../../assets/pack_generator.svg';
 import blockGeneratorIcon from '../../../assets/block_generator.svg';
 import textureStorageIcon from '../../../assets/texture_storage.svg';
@@ -31,15 +30,6 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         imageStyle: 'work-option-card__image--block',
         icon: blockGeneratorIcon,
       },
-      {
-        id: 'texture',
-        title: 'Texture Storage',
-        description: 'Draft an texture concept and keep the workflow ready for a future dedicated editor.',
-        buttonLabel: 'Open texture creator',
-        imageLabel: 'texture creator preview',
-        imageStyle: 'work-option-card__image--texture',
-        icon: textureStorageIcon,
-      },
     ],
     []
   );
@@ -47,16 +37,7 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
   const renderSelectedTool = () => {
     switch (selectedTool) {
       case 'block':
-        return <BlockCreator availableTextures={textures} />;
-      case 'texture':
-        return (
-          <StoreBlockTexture 
-            dirHandle={dirHandle} 
-            setDirHandle={setDirHandle} 
-            textures={textures} 
-            setTextures={setTextures} 
-          />
-        );
+        return <BlockCreator/>;
       case 'pack':
         return <PackGenerator />;
       default:
