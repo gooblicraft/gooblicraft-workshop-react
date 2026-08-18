@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
+// Helper component para sa SVG preview
 const MiniModelPreview = ({ content }) => {
   try {
     let geos = [];
@@ -78,14 +79,165 @@ const MiniModelPreview = ({ content }) => {
 
 const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
   const [modalSearchQuery, setModalSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [dirHandle, setDirHandle] = useState(null);
 
-  const savedGeometries = (() => {
+  const folderInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Load mula sa localStorage
+  const [savedGeometries, setSavedGeometries] = useState(() => {
     const saved = localStorage.getItem('goobli_available_geometries');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) { return []; }
     }
     return [];
-  })();
+  });
+
+  // Centralized update function na nagse-save din sa disk kung may active dirHandle
+  const updateGeometries = async (updater, newAddedGeos = []) => {
+    const nextState = typeof updater === 'function' ? updater(savedGeometries) : updater;
+    
+    setSavedGeometries(nextState);
+    try {
+      localStorage.setItem('goobli_available_geometries', JSON.stringify(nextState));
+    } catch (err) {
+      console.warn("Storage quota exceeded.");
+    }
+
+    if (dirHandle && newAddedGeos.length > 0) {
+      try {
+        for (const geo of newAddedGeos) {
+          const fileHandle = await dirHandle.getFileHandle(geo.name, { create: true });
+          const writable = await fileHandle.createWritable();
+          await writable.write(JSON.stringify(geo.content, null, 2));
+          await writable.close();
+        }
+      } catch (err) {
+        console.error("Hindi maisulat nang direkta sa folder:", err);
+      }
+    }
+  };
+
+  // Recursive reader para sa Directory Picker
+  const readDirectoryRecursive = async (handle, pathPrefix = '') => {
+    let filesList = [];
+    for await (const entry of handle.values()) {
+      const currentPath = pathPrefix ? `${pathPrefix}/${entry.name}` : entry.name;
+      if (entry.kind === 'file') {
+        const name = entry.name.toLowerCase();
+        if (name.endsWith('.json') && !name.includes('manifest') && !name.includes('pack_icon')) {
+          try {
+            const file = await entry.getFile();
+            const textContent = await file.text();
+            const content = JSON.parse(textContent);
+            
+            if (content?.["minecraft:geometry"] || content?.format_version || Array.isArray(content)) {
+              filesList.push({
+                name: entry.name,
+                path: currentPath,
+                content: content
+              });
+            }
+          } catch (err) {
+            console.error(`Skipped ${currentPath}: Invalid JSON`);
+          }
+        }
+      } else if (entry.kind === 'directory') {
+        const subFiles = await readDirectoryRecursive(entry, currentPath);
+        filesList = filesList.concat(subFiles);
+      }
+    }
+    return filesList;
+  };
+
+  // Pagbukas ng Parent Directory (Open Models Folder)
+  const handlePickDirectory = async () => {
+    if (!window.showDirectoryPicker) {
+      folderInputRef.current?.click();
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setLoadingProgress(20);
+      
+      const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      setDirHandle(handle);
+
+      setLoadingProgress(50);
+      const loadedGeos = await readDirectoryRecursive(handle);
+      setLoadingProgress(100);
+      
+      await updateGeometries(loadedGeos);
+      setIsLoading(false);
+      alert(`Matagumpay na nai-load ang ${loadedGeos.length} geometry files mula sa folder!`);
+    } catch (err) {
+      setIsLoading(false);
+      if (err.name !== 'AbortError') {
+        console.error("Error picking directory:", err);
+      }
+    }
+  };
+
+  // Pag-add ng manual files o folder upload
+  const handleFilesAddition = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+
+    const validFiles = Array.from(fileList).filter(file => {
+      const name = file.name.toLowerCase();
+      return name.endsWith('.json') && !name.includes('manifest') && !name.includes('pack_icon');
+    });
+
+    if (validFiles.length === 0) {
+      alert("Mangyaring pumili o mag-drop ng mga valid geometry .json files.");
+      return;
+    }
+
+    setIsLoading(true);
+    const newGeos = [];
+
+    for (const file of validFiles) {
+      try {
+        const textContent = await file.text();
+        const content = JSON.parse(textContent);
+        newGeos.push({
+          name: file.name,
+          path: file.webkitRelativePath || file.name,
+          content: content
+        });
+      } catch (err) {
+        console.error(`Hindi nabasa ang ${file.name}`);
+      }
+    }
+
+    if (newGeos.length > 0) {
+      await updateGeometries(prev => {
+        const existingPaths = new Set(prev.map(g => g.path));
+        const uniqueNewGeos = newGeos.filter(g => !existingPaths.has(g.path));
+        return [...prev, ...uniqueNewGeos];
+      }, newGeos);
+
+      alert(`Matagumpay na naidagdag at naisave ang ${newGeos.length} model file(s)!`);
+    }
+
+    setIsLoading(false);
+  };
+
+  // Pagbura ng Model
+  const handleDeleteGeo = async (targetPath, e) => {
+    e.stopPropagation(); // Para hindi mag-trigger yung pag-select ng model
+    await updateGeometries(prev => prev.filter(geo => geo.path !== targetPath));
+    
+    if (dirHandle) {
+      try {
+        await dirHandle.removeEntry(targetPath);
+      } catch (err) {
+        console.warn("Hindi nabura sa disk folder:", err);
+      }
+    }
+  };
 
   const searchNeedle = modalSearchQuery.toLowerCase();
   const filteredModels = savedGeometries.filter((geo) => {
@@ -114,8 +266,8 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
         border: '1px solid rgba(255, 255, 255, 0.16)',
         borderRadius: '16px',
         width: '100%',
-        maxWidth: '760px',
-        maxHeight: '80vh',
+        maxWidth: '850px',
+        maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column',
         boxShadow: '0 24px 60px rgba(0, 0, 0, 0.4)',
@@ -123,43 +275,108 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
         color: '#eaf2ff',
         backdropFilter: 'blur(14px)'
       }}>
-        <div style={{ padding: '20px 20px 15px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
-          <div style={{ position: 'relative', width: '100%' }}>
-            <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '0.9rem' }}>🔍</span>
-            <input 
-              type="text"
-              placeholder="SEARCH MODELS..." 
-              value={modalSearchQuery}
-              onChange={(e) => setModalSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px 10px 38px',
-                backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                border: '1px solid #444c56',
-                borderRadius: '10px',
-                color: '#fff',
-                outline: 'none',
-                fontSize: '0.85rem',
-                textTransform: 'uppercase',
-                fontWeight: 'bold'
-              }}
-            />
+        
+        {/* HEADER / ACTIONS */}
+        <div style={{ padding: '20px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', backgroundColor: 'rgba(255, 255, 255, 0.02)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: '220px' }}>
+              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', opacity: 0.6, fontSize: '0.9rem' }}>🔍</span>
+              <input 
+                type="text"
+                placeholder="SEARCH MODELS..." 
+                value={modalSearchQuery}
+                onChange={(e) => setModalSearchQuery(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px 10px 38px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                  border: '1px solid #444c56',
+                  borderRadius: '10px',
+                  color: '#fff',
+                  outline: 'none',
+                  fontSize: '0.85rem',
+                  textTransform: 'uppercase',
+                  fontWeight: 'bold'
+                }}
+              />
+            </div>
+
+            {/* FOLDER PICKER & FILE UPLOAD BUTTONS */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <input 
+                ref={folderInputRef}
+                type="file"
+                webkitdirectory="true"
+                directory="true"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => handleFilesAddition(e.target.files)}
+              />
+              <input 
+                ref={fileInputRef}
+                type="file"
+                accept=".json"
+                multiple
+                style={{ display: 'none' }}
+                onChange={(e) => handleFilesAddition(e.target.files)}
+              />
+
+              <button
+                onClick={handlePickDirectory}
+                disabled={isLoading}
+                style={{
+                  padding: '9px 14px',
+                  fontSize: '0.75rem',
+                  backgroundColor: 'rgba(127, 176, 255, 0.15)',
+                  border: '1px solid #7fb0ff',
+                  borderRadius: '8px',
+                  color: '#7fb0ff',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                {isLoading ? `Loading... (${loadingProgress}%)` : '📂 Open Models Folder'}
+              </button>
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                style={{
+                  padding: '9px 14px',
+                  fontSize: '0.75rem',
+                  backgroundColor: 'rgba(126, 231, 135, 0.15)',
+                  border: '1px solid #7ee787',
+                  borderRadius: '8px',
+                  color: '#7ee787',
+                  cursor: 'pointer',
+                  fontWeight: 'bold'
+                }}
+              >
+                + Add Model Files
+              </button>
+            </div>
           </div>
+
         </div>
 
+        {/* BODY / LIST OF MODELS */}
         <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>
-          {savedGeometries.length === 0 ? (
+          {isLoading && savedGeometries.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px 0' }}>
+              <p style={{ opacity: 0.8, color: '#7fb0ff' }}>Binabasa ang mga model files... {loadingProgress}%</p>
+            </div>
+          ) : savedGeometries.length === 0 ? (
             <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0' }}>
-              No models found. Please upload a models folder in Model Storage first!
+              Wala pang nakitang models. I-click ang <b>Open Models Folder</b> o <b>+ Add Model Files</b> sa itaas para magdagdag!
             </p>
           ) : filteredModels.length === 0 ? (
             <p style={{ textAlign: 'center', opacity: 0.7, padding: '30px 0', color: '#cf222e' }}>
-              No models match "{modalSearchQuery}".
+              Walang nahanap na model na tumutugma sa "{modalSearchQuery}".
             </p>
           ) : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '16px' }}>
               {filteredModels.map((geo, index) => {
-                // Tinatanggal ang .geo.json o .json para maging malinis ang display name
                 const cleanDisplayName = (geo?.name || 'unnamed_model').replace(/(\.geo)?\.json$/, "");
                 const isSelected = currentSelected === cleanDisplayName;
 
@@ -171,6 +388,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
                       onClose();
                     }}
                     style={{
+                      position: 'relative',
                       border: isSelected ? '2px solid #7ee787' : '1px solid rgba(255, 255, 255, 0.15)',
                       borderRadius: '14px',
                       padding: '14px',
@@ -188,9 +406,34 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
                       <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#7ee787', wordBreak: 'break-all', lineHeight: '1.2' }}>
                         {cleanDisplayName}
                       </span>
-                      <span style={{ fontSize: '0.65rem', background: 'rgba(127, 176, 255, 0.15)', color: '#7fb0ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold', flexShrink: 0 }}>
-                        GEO
-                      </span>
+                      
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                        <span style={{ fontSize: '0.65rem', background: 'rgba(127, 176, 255, 0.15)', color: '#7fb0ff', padding: '2px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                          GEO
+                        </span>
+                        <button
+                          onClick={(e) => handleDeleteGeo(geo.path, e)}
+                          title="Delete model"
+                          style={{
+                            background: 'rgba(207, 34, 46, 0.15)',
+                            border: '1px solid rgba(207, 34, 46, 0.3)',
+                            color: '#ff7b72',
+                            width: '20px',
+                            height: '20px',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            padding: 0,
+                            lineHeight: 1
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ 
@@ -214,6 +457,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
           )}
         </div>
 
+        {/* FOOTER */}
         <div style={{ padding: '15px 20px', borderTop: '1px solid rgba(255, 255, 255, 0.1)', textAlign: 'right', backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
           <button 
             onClick={onClose}
@@ -231,6 +475,7 @@ const ModelPickerModal = ({ currentSelected, onSelect, onClose }) => {
             Close
           </button>
         </div>
+
       </div>
     </div>
   );

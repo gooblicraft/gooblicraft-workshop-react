@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import PackGenerator from './PackGenerator';
 import BlockCreator from './BlockCreator';
-import ModelStorage from './ModelStorage';
 import StoreBlockTexture from './StoreBlockTexture';
 import packGeneratorIcon from '../../../assets/pack_generator.svg';
 import blockGeneratorIcon from '../../../assets/block_generator.svg';
@@ -41,15 +40,6 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
         imageStyle: 'work-option-card__image--texture',
         icon: textureStorageIcon,
       },
-      {
-        id: 'model',
-        title: 'Model Storage',
-        description: 'Upload and manage Blockbench geometry files for your block models.',
-        buttonLabel: 'Open model storage',
-        imageLabel: 'Model storage preview',
-        imageStyle: 'work-option-card__image--model',
-        icon: modelStorageIcon,
-      },
     ],
     []
   );
@@ -67,8 +57,6 @@ const WorkOptions = ({ dirHandle, setDirHandle, textures, setTextures }) => {
             setTextures={setTextures} 
           />
         );
-      case 'model':
-        return <ModelStorage />;
       case 'pack':
         return <PackGenerator />;
       default:
