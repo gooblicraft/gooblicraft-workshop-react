@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import TexturePickerModal from '../TexturePickerModal';
+import { useTextures } from '../../../../hooks/TextureContext';
 
 const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview }) => {
   return (
@@ -73,7 +74,9 @@ const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview
   );
 };
 
-const SlabBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
+const SlabBlock = ({ onAddBlock, onFormChange }) => {
+  const { textures: availableTextures } = useTextures();
+
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -264,7 +267,11 @@ const SlabBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
     marginBottom: '8px'
   };
 
-  const selectedTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === blockData.blockTexture);
+  const selectedTexObj = availableTextures.find(t => {
+    const clean = t.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+    const target = (blockData.blockTexture || "").trim().toLowerCase();
+    return clean === target;
+  });
 
   return (
     <div className="workspace-page">
@@ -322,7 +329,7 @@ const SlabBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                 </label>
               </div>
 
-              {/* ROW 2 (Menu Group lang ang natira dito) */}
+              {/* ROW 2 (Menu Group) */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px auto' }}>
                 <label className="workspace-label" style={labelStyle}>
                   <span style={{ marginBottom: '8px' }}>Menu Group Name:</span>
@@ -362,7 +369,11 @@ const SlabBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                 </div>
 
                 {blockData.materialInstances.map((inst, index) => {
-                  const customTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === inst.texture);
+                  const customTexObj = availableTextures.find(t => {
+                    const clean = t.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+                    const target = (inst.texture || "").trim().toLowerCase();
+                    return clean === target;
+                  });
 
                   return (
                     <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'center', marginBottom: '12px', backgroundColor: 'transparent', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -398,7 +409,10 @@ const SlabBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                           }}
                         >
                           {customTexObj ? (
-                            <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <img src={customTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                              <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name.replace(/\.[^/.]+$/, "")}</span>
+                            </div>
                           ) : (
                             <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select texture...</span>
                           )}
@@ -459,7 +473,7 @@ const SlabBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                       {selectedTexObj ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <img src={selectedTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
-                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name.replace(/\.[^/.]+$/, "")}</span>
                         </div>
                       ) : (
                         <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select default texture...</span>

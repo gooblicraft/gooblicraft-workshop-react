@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ModelPickerModal from '../ModelPickerModal';
 import TexturePickerModal from '../TexturePickerModal';
+import { useTextures } from '../../../../hooks/TextureContext';
 
 const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview }) => {
   return (
@@ -74,7 +75,9 @@ const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview
   );
 };
 
-const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
+const HorizontableBlock = ({ onAddBlock, onFormChange }) => {
+  const { textures: availableTextures } = useTextures();
+
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -337,7 +340,11 @@ const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange })
     marginBottom: '8px'
   };
 
-  const selectedTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === blockData.blockTexture);
+  const selectedTexObj = availableTextures.find(t => {
+    const clean = t.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+    const target = (blockData.blockTexture || "").trim().toLowerCase();
+    return clean === target;
+  });
 
   return (
     <div className="workspace-page">
@@ -367,8 +374,8 @@ const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange })
                     style={{ width: '100%' }} 
                     value={blockData.blockId} 
                     onChange={(e) => {
-                      const formattedValue = e.target.value.replace(/\s+/g, '_'); 
-                      handleUpdate('blockId', formattedValue);
+                        const formattedValue = e.target.value.replace(/\s+/g, '_'); 
+                        handleUpdate('blockId', formattedValue);
                     }} 
                     placeholder="my_addon" 
                   />
@@ -382,8 +389,8 @@ const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange })
                     style={{ width: '100%' }} 
                     value={blockData.blockName} 
                     onChange={(e) => {
-                      const formattedValue = e.target.value.replace(/\s+/g, '_'); 
-                      handleUpdate('blockName', formattedValue);
+                        const formattedValue = e.target.value.replace(/\s+/g, '_'); 
+                        handleUpdate('blockName', formattedValue);
                     }} 
                     placeholder="connected_block" 
                   />
@@ -457,7 +464,11 @@ const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange })
                 </div>
 
                 {blockData.materialInstances.map((inst, index) => {
-                  const customTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === inst.texture);
+                  const customTexObj = availableTextures.find(t => {
+                    const clean = t.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+                    const target = (inst.texture || "").trim().toLowerCase();
+                    return clean === target;
+                  });
 
                   return (
                     <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'center', marginBottom: '12px', backgroundColor: 'transparent', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -493,7 +504,10 @@ const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange })
                           }}
                         >
                           {customTexObj ? (
-                            <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <img src={customTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                              <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name.replace(/\.[^/.]+$/, "")}</span>
+                            </div>
                           ) : (
                             <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select texture...</span>
                           )}
@@ -554,7 +568,7 @@ const HorizontableBlock = ({ availableTextures = [], onAddBlock, onFormChange })
                       {selectedTexObj ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <img src={selectedTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
-                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name.replace(/\.[^/.]+$/, "")}</span>
                         </div>
                       ) : (
                         <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select default texture...</span>
