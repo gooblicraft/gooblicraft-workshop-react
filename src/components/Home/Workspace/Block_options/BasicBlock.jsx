@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ModelPickerModal from '../ModelPickerModal';
 import TexturePickerModal from '../TexturePickerModal';
+import { useTextures } from '../../../../hooks/TextureContext';
 
 const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview }) => {
   return (
@@ -74,7 +75,9 @@ const ManifestModal = ({ getFormattedJsonString, copyToClipboard, setShowPreview
   );
 };
 
-const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
+const BasicBlock = ({ onAddBlock, onFormChange }) => {
+  const { textures: availableTextures } = useTextures();
+
   const [blockData, setBlockData] = useState({
     blockId: '',
     blockName: '',
@@ -84,7 +87,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
     blockGeometry: '',
     blockTexture: '',
     blockRender: 'opaque',
-    materialInstances: [], // Dito ise-save ang karagdagang materials (max 10)
+    materialInstances: [],
     collisionBox: '',
     selectionBox: ''
   });
@@ -92,9 +95,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [isTextureModalOpen, setIsTextureModalOpen] = useState(false);
   const [isModelModalOpen, setIsModelModalOpen] = useState(false);
-
-  // State para malaman kung aling index ng custom material ang binabago sa texture modal
-  const [activeTextureTarget, setActiveTextureTarget] = useState('default'); // 'default' o index number (hal. 0, 1...)
+  const [activeTextureTarget, setActiveTextureTarget] = useState('default');
 
   const handleUpdate = (field, value) => {
     setBlockData((prev) => ({
@@ -107,7 +108,6 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
     }
   };
 
-  // Mga functions para sa dynamic material instances (hanggang 10)
   const handleAddMaterialInstance = () => {
     if (blockData.materialInstances.length >= 10) {
       alert("Maaari lamang magdagdag ng hanggang 10 karagdagang material instances.");
@@ -150,10 +150,8 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
     
     const defaultBox = '{\n  "origin": [-8, 0, -8],\n  "size": [16, 16, 16]\n}';
 
-    // Buuin ang material_instances object dynamically
     const materialInstancesObj = {};
 
-    // 1. Ilagay muna ang mga custom material instances kung meron man
     blockData.materialInstances.forEach((inst) => {
       const matName = inst.materialName.trim() || 'material_name';
       materialInstancesObj[matName] = {
@@ -162,7 +160,6 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
       };
     });
 
-    // 2. Panghuli ay ang default wildcard (*) texture
     materialInstancesObj["*"] = {
       "texture": tex,
       "render_method": blockData.blockRender
@@ -277,7 +274,11 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
     marginBottom: '8px'
   };
 
-  const selectedTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === blockData.blockTexture);
+  const selectedTexObj = availableTextures.find(t => {
+    const clean = t.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+    const target = (blockData.blockTexture || "").trim().toLowerCase();
+    return clean === target;
+  });
 
   return (
     <div className="workspace-page" >
@@ -311,7 +312,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                         handleUpdate('blockId', formattedValue);
                     }} 
                     placeholder="my_addon" 
-                  />                
+                  />               
                 </label>
 
                 <label className="workspace-label" style={labelStyle}>
@@ -326,7 +327,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                         handleUpdate('blockName', formattedValue);
                     }} 
                     placeholder="basic_block" 
-                />                
+                  />               
                 </label>
 
                 <label className="workspace-label" style={labelStyle}>
@@ -380,7 +381,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                 </label>
               </div>
 
-              {/* MATERIAL INSTANCES SECTION (Dito ilalagay ang mga karagdagang textures bago mag `*`) */}
+              {/* MATERIAL INSTANCES SECTION */}
               <div style={{ border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backgroundColor: 'transparent' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                   <h3 style={{ margin: 0, fontSize: '0.9rem', color: '#7fb0ff', textTransform: 'uppercase' }}>Material Instances (Textures & Renders)</h3>
@@ -401,13 +402,15 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                   </button>
                 </div>
 
-                {/* List ng mga Custom Material Instances */}
                 {blockData.materialInstances.map((inst, index) => {
-                  const customTexObj = availableTextures.find(t => t.name.replace(/\.[^/.]+$/, "") === inst.texture);
+                  const customTexObj = availableTextures.find(t => {
+                    const clean = t.name.replace(/\.[^/.]+$/, "").trim().toLowerCase();
+                    const target = (inst.texture || "").trim().toLowerCase();
+                    return clean === target;
+                  });
 
                   return (
                     <div key={index} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '12px', alignItems: 'center', marginBottom: '12px', backgroundColor: 'transparent', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {/* Material Name */}
                       <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
                         <span style={{ marginBottom: '4px' }}>Material Name:</span>
                         <input 
@@ -420,7 +423,6 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                         />
                       </label>
 
-                      {/* Texture Picker Trigger */}
                       <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
                         <span style={{ marginBottom: '4px' }}>Texture:</span>
                         <div 
@@ -441,7 +443,10 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                           }}
                         >
                           {customTexObj ? (
-                            <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <img src={customTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                              <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{customTexObj.name.replace(/\.[^/.]+$/, "")}</span>
+                            </div>
                           ) : (
                             <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select texture...</span>
                           )}
@@ -449,7 +454,6 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                         </div>
                       </label>
 
-                      {/* Render Method */}
                       <label style={{ display: 'flex', flexDirection: 'column', fontSize: '0.75rem', fontWeight: 'bold', textTransform: 'uppercase', color: '#fff' }}>
                         <span style={{ marginBottom: '4px' }}>Render Method:</span>
                         <select 
@@ -465,7 +469,6 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                         </select>
                       </label>
 
-                      {/* Delete Button */}
                       <button 
                         onClick={() => handleRemoveMaterialInstance(index)}
                         style={{ background: 'rgba(215, 58, 73, 0.2)', border: '1px solid #da3633', color: '#ff7b72', width: '32px', height: '32px', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginTop: '16px' }}
@@ -505,7 +508,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
                       {selectedTexObj ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <img src={selectedTexObj.url} alt="" style={{ width: '18px', height: '18px', objectFit: 'contain', imageRendering: 'pixelated' }} />
-                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name}</span>
+                          <span style={{ fontSize: '0.75rem', color: '#7ee787' }}>{selectedTexObj.name.replace(/\.[^/.]+$/, "")}</span>
                         </div>
                       ) : (
                         <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>Select default texture...</span>
@@ -576,7 +579,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
         </div>
       </div>
 
-      {/* REUSABLE TEXTURE PICKER MODAL (Nakadepende kung default o custom material ang binabago) */}
+      {/* TEXTURE PICKER MODAL */}
       {isTextureModalOpen && (
         <TexturePickerModal 
           availableTextures={availableTextures} 
@@ -592,7 +595,7 @@ const BasicBlock = ({ availableTextures = [], onAddBlock, onFormChange }) => {
         />
       )}
 
-      {/* REUSABLE MODEL PICKER MODAL */}
+      {/* MODEL PICKER MODAL */}
       {isModelModalOpen && (
         <ModelPickerModal 
           currentSelected={blockData.blockGeometry}
